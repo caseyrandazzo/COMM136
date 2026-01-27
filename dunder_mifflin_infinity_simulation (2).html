@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dunder Mifflin Infinity - Technology Adoption Simulation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
+    const { useState } = React;
+
+    const TechnologyAdoptionSimulation = () => {
+      const [stage, setStage] = useState('intro');
+      const [round, setRound] = useState(0);
+      const [dominantConcerns, setDominantConcerns] = useState([]);
+      const [responses, setResponses] = useState([]);
+      const [results, setResults] = useState(null);
+      const [isRevealing, setIsRevealing] = useState(false);
+      const [showResponses, setShowResponses] = useState(false);
+
+      const rounds = [
+        {
+          roundTitle: "Corporate Announcement",
+          situation: "Ryan is presenting Dunder Mifflin Infinity to the branch for the first time.",
+          concerns: [
+            { id: 'future', label: '"This is the future"', quote: 'Adapt or die.', who: 'Ryan', icon: '🚀' },
+            { id: 'clients', label: '"What about our clients?"', quote: 'They trust us, not a website.', who: 'Phyllis', icon: '🤝' },
+            { id: 'metrics', label: '"We can track everything"', quote: 'Real-time sales data for corporate.', who: 'Ryan', icon: '📊' },
+            { id: 'replacement', label: '"Are we being replaced?"', quote: 'A website can not do what I do.', who: 'Stanley', icon: '😰' },
+          ],
+          responses: {
+            good: { label: 'Reassure and reframe', desc: '"The website helps you serve clients better. It is a tool, not a replacement."', icon: '👍' },
+            dismiss: { label: 'Shut it down', desc: '"This is happening whether you like it or not."', icon: '🙄' },
+            ignore: { label: 'Deflect', desc: '"Let us move on to the demo..."', icon: '😶' },
+          }
+        },
+        {
+          roundTitle: "The Training Session",
+          situation: "Employees are learning how to use the platform for the first time.",
+          concerns: [
+            { id: 'confusing', label: '"This is confusing"', quote: 'Where do I even click?', who: 'Michael', icon: '😕' },
+            { id: 'helpful', label: '"Could save us time"', quote: 'Less paperwork if it works.', who: 'Jim', icon: '👍' },
+            { id: 'mandatory', label: '"Is this mandatory?"', quote: 'Do we have to use this?', who: 'Stanley', icon: '📋' },
+            { id: 'myway', label: '"My way works fine"', quote: 'I have been doing this for 20 years.', who: 'Phyllis', icon: '🤷' },
+          ],
+          responses: {
+            good: { label: 'Offer support', desc: '"Let us walk through it together. What part is tripping you up?"', icon: '👍' },
+            dismiss: { label: 'Blame them', desc: '"It is not that hard. Just figure it out."', icon: '🙄' },
+            ignore: { label: 'Rush through', desc: '"We are running low on time. Let us keep going."', icon: '😶' },
+          }
+        },
+        {
+          roundTitle: "First Week Check-In",
+          situation: "The platform has been live for a week. Salespeople are frustrated.",
+          concerns: [
+            { id: 'undercut', label: '"The website undercuts us"', quote: 'It is selling cheaper than I can offer.', who: 'Dwight', icon: '😠' },
+            { id: 'trust', label: '"Customers still call me"', quote: 'They want to talk to a person, not a website.', who: 'Phyllis', icon: '💪' },
+            { id: 'numbers', label: '"Online sales are up"', quote: 'The website is working great.', who: 'Ryan', icon: '📈' },
+            { id: 'integrate', label: '"Maybe we can use both"', quote: 'Show them the website, then close the deal myself.', who: 'Jim', icon: '🔗' },
+          ],
+          responses: {
+            good: { label: 'Acknowledge and fix', desc: '"You are right, that is a problem. Let us adjust the pricing so you are not competing with our own site."', icon: '👍' },
+            dismiss: { label: 'Defend the system', desc: '"The numbers speak for themselves. Online is the future."', icon: '🙄' },
+            ignore: { label: 'Delay action', desc: '"I hear you. We will look into that."', icon: '😶' },
+          }
+        },
+        {
+          roundTitle: "Leadership Debrief",
+          situation: "A month in, adoption is low. Leadership is deciding next steps.",
+          concerns: [
+            { id: 'force', label: '"Make it mandatory"', quote: 'If they will not use it willingly, require it.', who: 'Ryan', icon: '⚠️' },
+            { id: 'listen', label: '"We should listen to them"', quote: 'Maybe the complaints are valid.', who: 'Jim', icon: '👂' },
+            { id: 'blame', label: '"They are just old school"', quote: 'Some people can not handle change.', who: 'Ryan', icon: '🙄' },
+            { id: 'adapt', label: '"We could adjust it"', quote: 'Change the platform based on feedback.', who: 'Pam', icon: '🔧' },
+          ],
+          responses: {
+            good: { label: 'Adapt based on feedback', desc: '"Let us redesign parts of the system based on what we have heard."', icon: '👍' },
+            dismiss: { label: 'Force compliance', desc: '"Make it mandatory. If they do not use it, there will be consequences."', icon: '🙄' },
+            ignore: { label: 'Wait and see', desc: '"Let us give it more time. People will come around."', icon: '😶' },
+          }
+        },
+      ];
+
+      const selectRandomConcerns = (roundIndex) => {
+        const concerns = rounds[roundIndex].concerns;
+        const shuffled = [...concerns].sort(() => Math.random() - 0.5);
+        return [shuffled[0], shuffled[1]];
+      };
+
+      const handleStartRound = () => {
+        setIsRevealing(true);
+        const selected = selectRandomConcerns(round);
+        
+        setTimeout(() => {
+          setDominantConcerns(selected);
+          setIsRevealing(false);
+          setShowResponses(true);
+        }, 1500);
+      };
+
+      const handleResponse = (responseType) => {
+        const updated = [...responses, responseType];
+        setResponses(updated);
+        
+        if (round < rounds.length - 1) {
+          setRound(round + 1);
+          setDominantConcerns([]);
+          setShowResponses(false);
+        } else {
+          setResults(calculateOutcome(updated));
+          setStage('results');
+        }
+      };
+
+      const calculateOutcome = (allResponses) => {
+        const goodCount = allResponses.filter(r => r === 'good').length;
+        const dismissCount = allResponses.filter(r => r === 'dismiss').length;
+        const ignoreCount = allResponses.filter(r => r === 'ignore').length;
+
+        if (goodCount >= 3) {
+          return {
+            title: "Successful Adoption!",
+            desc: "The sales team actually uses the platform. By addressing their concerns, you built trust and showed the technology could help them.",
+            lesson: "When concerns were addressed instead of dismissed, people saw the technology as a tool rather than a threat.",
+            icon: "🎉",
+            color: "bg-green-500",
+            success: true,
+          };
+        } else if (dismissCount >= 3) {
+          return {
+            title: "The Ryan Approach",
+            desc: "Adoption is mandatory but resentful. People do the bare minimum. The platform becomes associated with corporate control, not helpfulness.",
+            lesson: "Dismissing concerns does not make them go away. It just turns resistance into resentment.",
+            icon: "📉",
+            color: "bg-red-500",
+            success: false,
+          };
+        } else if (ignoreCount >= 3) {
+          return {
+            title: "Death by Indifference",
+            desc: "The platform fades into irrelevance. Without addressing concerns or forcing adoption, people just quietly stop using it.",
+            lesson: "Ignoring concerns is not neutral. It signals that the concerns do not matter, so neither does the technology.",
+            icon: "👻",
+            color: "bg-gray-500",
+            success: false,
+          };
+        } else if (dismissCount >= 2 && ignoreCount >= 1) {
+          return {
+            title: "Quiet Resentment",
+            desc: "Some people comply, most people resent it. The platform limps along but never becomes useful.",
+            lesson: "A mix of dismissal and indifference created confusion. People did not know if leadership cared or not.",
+            icon: "😒",
+            color: "bg-orange-500",
+            success: false,
+          };
+        } else {
+          return {
+            title: "Mixed Results",
+            desc: "Some progress, but inconsistent responses meant the technology never fully landed. A few teams use it, most do not.",
+            lesson: "Addressing concerns sometimes is better than never, but consistency matters for building trust.",
+            icon: "🤷",
+            color: "bg-yellow-500",
+            success: false,
+          };
+        }
+      };
+
+      // INTRO
+      if (stage === 'intro') {
+        return (
+          <div className="min-h-screen p-4 flex items-center justify-center" style={{ backgroundColor: '#355E8B' }}>
+            <div className="max-w-md mx-auto bg-white rounded-lg shadow-2xl overflow-hidden">
+              <div className="p-6 text-center" style={{ backgroundColor: '#355E8B' }}>
+                <h1 className="text-2xl font-bold text-white tracking-wide">DUNDER MIFFLIN</h1>
+                <h2 className="text-xl font-bold text-white tracking-wide">INFINITY</h2>
+              </div>
+              
+              <div className="p-6">
+                <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                  <p className="font-medium text-gray-800">You are a communication consultant Ryan hired to help with the adoption of Dunder Mifflin Infinity.</p>
+                  <p className="text-sm text-gray-600 mt-2">You will attend 4 meetings. In each meeting, employees will voice their reactions. Your job is to respond in a way that leads to technology adoption.</p>
+                </div>
+
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
+                  <p className="text-sm text-yellow-800"><strong>How to win:</strong> Get the Scranton branch to adopt the technology.</p>
+                </div>
+
+                <button
+                  onClick={() => setStage('game')}
+                  className="w-full text-white font-bold py-3 rounded-lg text-lg"
+                  style={{ backgroundColor: '#355E8B' }}
+                >
+                  Start →
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // RESULTS
+      if (stage === 'results') {
+        return (
+          <div className="min-h-screen p-4 flex items-center justify-center" style={{ backgroundColor: '#355E8B' }}>
+            <div className="max-w-md mx-auto bg-white rounded-lg shadow-2xl overflow-hidden">
+              <div className={`p-4 text-center ${results.color}`}>
+                <span className="text-5xl">{results.icon}</span>
+                <h1 className="text-xl font-bold text-white mt-2">{results.title}</h1>
+              </div>
+              
+              <div className="p-6">
+                <p className="text-gray-700 mb-4">{results.desc}</p>
+                
+                <div className="bg-gray-100 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-gray-700"><strong>The takeaway:</strong> {results.lesson}</p>
+                </div>
+
+                {!results.success && (
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
+                    <p className="text-sm text-yellow-800">This is similar to what happened to Ryan. He dismissed and ignored concerns instead of addressing them.</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => { setStage('intro'); setRound(0); setDominantConcerns([]); setResponses([]); setShowResponses(false); }}
+                  className="w-full text-white font-bold py-3 rounded-lg"
+                  style={{ backgroundColor: '#355E8B' }}
+                >
+                  Try Again →
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
+      // GAME
+      const currentRound = rounds[round];
+      
+      return (
+        <div className="min-h-screen p-4" style={{ backgroundColor: '#355E8B' }}>
+          <div className="max-w-md mx-auto">
+            {/* Progress */}
+            <div className="mb-3">
+              <div className="flex justify-between text-white text-sm mb-1">
+                <span>Meeting {round + 1}/4</span>
+              </div>
+              <div className="bg-white bg-opacity-30 rounded-full h-2">
+                <div 
+                  className="bg-white h-2 rounded-full transition-all"
+                  style={{ width: `${((round + 1) / 4) * 100}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-2xl overflow-hidden">
+              <div className="p-3 border-b" style={{ backgroundColor: '#f3f4f6' }}>
+                <p className="text-xs text-gray-500 uppercase tracking-wide">The situation</p>
+                <p className="text-sm text-gray-700">{currentRound.situation}</p>
+              </div>
+              
+              <div className="p-4">
+                {/* Before reveal */}
+                {!isRevealing && dominantConcerns.length === 0 && !showResponses && (
+                  <>
+                    <p className="text-sm text-gray-600 mb-3">The meeting is about to start...</p>
+                    <button
+                      onClick={handleStartRound}
+                      className="w-full text-white font-bold py-3 rounded-lg"
+                      style={{ backgroundColor: '#355E8B' }}
+                    >
+                      Enter Meeting →
+                    </button>
+                  </>
+                )}
+
+                {/* Revealing animation */}
+                {isRevealing && (
+                  <div className="text-center py-8">
+                    <div className="animate-pulse text-2xl mb-2">💬</div>
+                    <p className="text-gray-600">The conversation unfolds...</p>
+                  </div>
+                )}
+
+                {/* Show dominant concerns and response options */}
+                {showResponses && (
+                  <>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Employee reactions</p>
+                    <div className="space-y-2 mb-4">
+                      {dominantConcerns.map((concern) => (
+                        <div
+                          key={concern.id}
+                          className="w-full text-left p-3 rounded-lg border-2 border-blue-600 bg-blue-50"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-xl">{concern.icon}</span>
+                            <div className="flex-1">
+                              <span className="font-medium text-gray-800">{concern.label}</span>
+                              <p className="text-sm text-gray-500">"{concern.quote}" — {concern.who}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">How do you respond?</p>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => handleResponse('good')}
+                        className="w-full text-left p-3 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all"
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className="text-xl">{currentRound.responses.good.icon}</span>
+                          <div>
+                            <span className="font-medium text-gray-800">{currentRound.responses.good.label}</span>
+                            <p className="text-sm text-gray-500">{currentRound.responses.good.desc}</p>
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleResponse('dismiss')}
+                        className="w-full text-left p-3 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all"
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className="text-xl">{currentRound.responses.dismiss.icon}</span>
+                          <div>
+                            <span className="font-medium text-gray-800">{currentRound.responses.dismiss.label}</span>
+                            <p className="text-sm text-gray-500">{currentRound.responses.dismiss.desc}</p>
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleResponse('ignore')}
+                        className="w-full text-left p-3 rounded-lg border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all"
+                      >
+                        <div className="flex items-start gap-2">
+                          <span className="text-xl">{currentRound.responses.ignore.icon}</span>
+                          <div>
+                            <span className="font-medium text-gray-800">{currentRound.responses.ignore.label}</span>
+                            <p className="text-sm text-gray-500">{currentRound.responses.ignore.desc}</p>
+                          </div>
+                        </div>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TechnologyAdoptionSimulation />);
+  </script>
+</body>
+</html>
