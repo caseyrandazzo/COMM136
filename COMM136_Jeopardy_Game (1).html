@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COMM 136 Jeopardy - Midterm Review</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Georgia', serif; }
+    .jeopardy-title { font-family: 'Impact', sans-serif; letter-spacing: 2px; }
+  </style>
+</head>
+<body class="bg-blue-900 min-h-screen p-4">
+  <div class="max-w-6xl mx-auto" id="app"></div>
+
+  <script>
+    const gameData = {
+      categories: [
+        {
+          name: "Tech Perspectives",
+          questions: [
+            { points: 200, q: "This perspective says 'AI will take all our jobs' as if it's inevitable.", a: "What is Technological Determinism?" },
+            { points: 400, q: "A scholar using this perspective would ask 'How do people talk about this technology?' rather than 'What does this technology do?'", a: "What is Social Construction (or CCO)?" },
+            { points: 600, q: "The police body camera study supports this perspective because the same cameras had different effects in different departments.", a: "What is Social Shaping of Technology?" },
+            { points: 800, q: "Parent says: 'Tablets are neutral—it's all about the teachers.' This assumes technology has no inherent properties, which is the blind spot of this perspective.", a: "What is Social Construction?" },
+            { points: 1000, q: "A company implements identical software in two offices. Office A thrives, Office B fails. A determinist would be UNABLE to explain this because of this core assumption.", a: "What is the assumption that technology has universal/predictable effects?" }
+          ]
+        },
+        {
+          name: "Affordances",
+          questions: [
+            { points: 200, q: "An affordance is this—NOT a button, menu, or interface element.", a: "What is a possibility for action?" },
+            { points: 400, q: "Slack's green dot showing who's online is a feature. The affordance it provides is this.", a: "What is visibility?" },
+            { points: 600, q: "This affordance is called a 'root affordance' because many other affordances depend on it.", a: "What is visibility?" },
+            { points: 800, q: "Email archives and chat history provide this affordance, allowing you to reference past communication.", a: "What is persistence?" },
+            { points: 1000, q: "A student says 'TikTok's For You Page is an affordance.' Explain why this is WRONG.", a: "The FYP is a feature; the affordance is content discovery or personalized consumption" }
+          ]
+        },
+        {
+          name: "TMS",
+          questions: [
+            { points: 200, q: "The TMS dimension that answers 'who knows what' on a team.", a: "What is specialization?" },
+            { points: 400, q: "Your team knows Taylor is the Excel expert, but nobody asks her because she gave bad advice once. This TMS dimension weakened.", a: "What is credibility?" },
+            { points: 600, q: "In the Community chicken finger heist, Jeff had strategy expertise but zero of these, making him an 'isolate.'", a: "What are coordination ties?" },
+            { points: 800, q: "This TMS process involves routing new information or tasks to the right person based on their expertise.", a: "What is information allocation?" },
+            { points: 1000, q: "According to Ellis, teams are LESS likely to use TMS processes at exactly the moment they need them most. This is called this.", a: "What is the stress paradox?" }
+          ]
+        },
+        {
+          name: "Networks",
+          questions: [
+            { points: 200, q: "In network analysis, people, organizations, and technologies are represented as these.", a: "What are nodes?" },
+            { points: 400, q: "This network measure tells you the proportion of actual connections out of all possible connections.", a: "What is density?" },
+            { points: 600, q: "When two people who share a mutual friend become friends themselves, this process occurred.", a: "What is triadic closure?" },
+            { points: 800, q: "A person who bridges otherwise disconnected groups, giving them access to diverse information.", a: "What is a broker?" },
+            { points: 1000, q: "In the Facebook study, couples with mutual friends from MULTIPLE contexts (work, family, hobbies) had this quality, making breakups less likely.", a: "What is high dispersion?" }
+          ]
+        },
+        {
+          name: "Algorithtic Mgmt",
+          questions: [
+            { points: 200, q: "The three components of AI systems, in order.", a: "What are data, algorithms, and decisions?" },
+            { points: 400, q: "This feature of algorithms refers to the fact that we often can't see how decisions are made.", a: "What is opacity (or black box)?" },
+            { points: 600, q: "In Coleman's Boat, when employees push back and the company changes its policies, this occurred.", a: "What is transformation?" },
+            { points: 800, q: "Uber drivers sharing tips to game surge pricing is the 'system' pushing back. But if Uber's policies stay the same, this occurred instead.", a: "What is reproduction?" },
+            { points: 1000, q: "Data always over-represents some groups and under-represents others because it's just a sample of reality. This is this feature of algorithms.", a: "What is inherent bias?" }
+          ]
+        },
+        {
+          name: "CCO & Adoption",
+          questions: [
+            { points: 200, q: "TAM's two factors that predict whether people will adopt technology.", a: "What are perceived usefulness and perceived ease of use?" },
+            { points: 400, q: "On the adoption curve, these people adopt last (or never) and doubt the technology's value.", a: "Who are skeptics/laggards?" },
+            { points: 600, q: "According to Martine et al., these 'make people talk, are what people talk about, and substantiate people's positions.'", a: "What are matters of concern?" },
+            { points: 800, q: "Ryan dismissed employee concerns about Dunder Mifflin Infinity. According to CCO, this allowed the resistance coalition to do this.", a: "What is grow stronger / win?" },
+            { points: 1000, q: "CCO argues technology doesn't exist first then get talked about. Instead, technology gets 'made into what it is' through conversation. This process is called this.", a: "What is constitution?" }
+          ]
+        }
+      ]
+    };
+
+    let scores = { team1: 0, team2: 0 };
+    let usedQuestions = new Set();
+    let currentQuestion = null;
+
+    function render() {
+      const app = document.getElementById('app');
+      
+      if (currentQuestion) {
+        app.innerHTML = renderQuestion();
+      } else {
+        app.innerHTML = renderBoard();
+      }
+    }
+
+    function renderBoard() {
+      let html = `
+        <div class="text-center mb-4">
+          <h1 class="jeopardy-title text-4xl font-bold text-yellow-400 mb-2">COMM 136 JEOPARDY</h1>
+          <p class="text-blue-200 text-sm">Midterm Review Edition</p>
+        </div>
+
+        <div class="flex justify-center gap-8 mb-4">
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center">
+            <div class="text-blue-300 text-sm">Team 1</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.team1}</div>
+          </div>
+          <button onclick="resetGame()" class="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">
+            Reset Game
+          </button>
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center">
+            <div class="text-blue-300 text-sm">Team 2</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.team2}</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-6 gap-2">
+      `;
+
+      // Category headers
+      gameData.categories.forEach((cat, i) => {
+        html += `
+          <div class="bg-blue-800 p-3 text-center rounded-t-lg">
+            <span class="text-yellow-400 font-bold text-sm leading-tight block">${cat.name}</span>
+          </div>
+        `;
+      });
+
+      // Questions grid
+      for (let qIndex = 0; qIndex < 5; qIndex++) {
+        gameData.categories.forEach((cat, catIndex) => {
+          const key = `${catIndex}-${qIndex}`;
+          const isUsed = usedQuestions.has(key);
+          if (isUsed) {
+            html += `<div class="bg-blue-950 p-4 text-center rounded text-blue-800"></div>`;
+          } else {
+            html += `
+              <button onclick="selectQuestion(${catIndex}, ${qIndex})" 
+                class="bg-blue-700 hover:bg-blue-600 p-4 text-center rounded text-yellow-400 font-bold text-xl cursor-pointer transition-all">
+                $${cat.questions[qIndex].points}
+              </button>
+            `;
+          }
+        });
+      }
+
+      html += `
+        </div>
+        <div class="mt-6 text-center text-blue-300 text-sm">
+          <p>Click a dollar amount to reveal the question. Answers must be in the form of a question!</p>
+        </div>
+      `;
+
+      return html;
+    }
+
+    function renderQuestion() {
+      const cat = gameData.categories[currentQuestion.catIndex];
+      const q = cat.questions[currentQuestion.qIndex];
+
+      let html = `
+        <div class="text-center mb-4">
+          <h1 class="jeopardy-title text-4xl font-bold text-yellow-400 mb-2">COMM 136 JEOPARDY</h1>
+        </div>
+
+        <div class="flex justify-center gap-8 mb-4">
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center">
+            <div class="text-blue-300 text-sm">Team 1</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.team1}</div>
+          </div>
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center">
+            <div class="text-blue-300 text-sm">Team 2</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.team2}</div>
+          </div>
+        </div>
+
+        <div class="bg-blue-800 rounded-lg p-8 text-center">
+          <div class="text-yellow-400 text-lg mb-2">${cat.name} - $${q.points}</div>
+          <div class="text-white text-2xl mb-8 leading-relaxed">${q.q}</div>
+          
+          <div id="answer-section">
+            <button onclick="showAnswer()" class="bg-yellow-500 hover:bg-yellow-400 text-blue-900 font-bold px-8 py-3 rounded-lg text-lg">
+              Reveal Answer
+            </button>
+          </div>
+        </div>
+      `;
+
+      return html;
+    }
+
+    function selectQuestion(catIndex, qIndex) {
+      currentQuestion = { catIndex, qIndex };
+      render();
+    }
+
+    function showAnswer() {
+      const cat = gameData.categories[currentQuestion.catIndex];
+      const q = cat.questions[currentQuestion.qIndex];
+
+      document.getElementById('answer-section').innerHTML = `
+        <div class="bg-blue-700 p-4 rounded-lg mb-6">
+          <div class="text-yellow-400 text-xl">${q.a}</div>
+        </div>
+        <div class="text-blue-200 mb-3">Who answered correctly?</div>
+        <div class="flex justify-center gap-4 flex-wrap">
+          <button onclick="scoreTeam('team1', ${q.points})" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg">
+            Team 1 (+$${q.points})
+          </button>
+          <button onclick="noScore()" class="bg-gray-600 hover:bg-gray-500 text-white px-6 py-2 rounded-lg">
+            No One
+          </button>
+          <button onclick="scoreTeam('team2', ${q.points})" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg">
+            Team 2 (+$${q.points})
+          </button>
+        </div>
+      `;
+    }
+
+    function scoreTeam(team, points) {
+      scores[team] += points;
+      usedQuestions.add(`${currentQuestion.catIndex}-${currentQuestion.qIndex}`);
+      currentQuestion = null;
+      render();
+    }
+
+    function noScore() {
+      usedQuestions.add(`${currentQuestion.catIndex}-${currentQuestion.qIndex}`);
+      currentQuestion = null;
+      render();
+    }
+
+    function resetGame() {
+      scores = { team1: 0, team2: 0 };
+      usedQuestions = new Set();
+      currentQuestion = null;
+      render();
+    }
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
