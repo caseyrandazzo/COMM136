@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COMM 136 Jeopardy - Midterm Review</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Georgia', serif; }
+    .jeopardy-title { font-family: 'Impact', sans-serif; letter-spacing: 2px; }
+    .timer-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+  </style>
+</head>
+<body class="bg-blue-900 min-h-screen p-4">
+  <div class="max-w-6xl mx-auto" id="app"></div>
+
+  <audio id="jeopardy-music" loop>
+    <source src="https://www.myinstants.com/media/sounds/jeopardy-theme-song.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const gameData = {
+      categories: [
+        {
+          name: "Tech Perspectives",
+          questions: [
+            { points: 200, q: "This perspective says 'Smartphones are ruining attention spans!'", a: "What is Technological Determinism?" },
+            { points: 400, q: "This perspective says outcomes depend on both affordances AND how people use technology.", a: "What is Social Shaping?" },
+            { points: 600, q: "A parent says 'Video games are fine, it's all about parenting.' This Social Construction perspective assumes:", a: "What is technology is neutral?" },
+            { points: 800, q: "In relational sociomateriality, entities exist through their relations. This process of 'coming into existence' is called:", a: "What is materialization?" },
+            { points: 1000, q: "A manager assumes new software will automatically make the team more productive. This reflects which assumption of technological determinism?", a: "What is technology has universal/predictable effects?" }
+          ]
+        },
+        {
+          name: "Affordances",
+          questions: [
+            { points: 200, q: "Affordances are possibilities for action, not guaranteed:", a: "What are outcomes?" },
+            { points: 400, q: "Dunder Mifflin Infinity had social networking features. These features afforded this, but a paper company didn't need it.", a: "What is connectivity?" },
+            { points: 600, q: "Google Docs lets you rewrite your paragraph five times before anyone sees it. This affordance makes that possible.", a: "What is editability?" },
+            { points: 800, q: "Google's search bar is an example of:", a: "What is a feature?" },
+            { points: 1000, q: "Researchers prefer studying affordances over features because affordances remain stable even when platforms update. This makes affordances:", a: "What is timeless?" }
+          ]
+        },
+        {
+          name: "TMS",
+          questions: [
+            { points: 200, q: "In TMS, not everyone needs to know everything because knowledge is this across team members.", a: "What is distributed?" },
+            { points: 400, q: "In the Chicken Finger Heist, Jeff had strategy expertise but zero coordination ties. In network terms, this made him:", a: "What is an isolate?" },
+            { points: 600, q: "This TMS process involves routing new tasks or information to the person best suited to handle them.", a: "What is information allocation?" },
+            { points: 800, q: "Yan et al. said structure does not equal this, which is how the team actually functions.", a: "What is process?" },
+            { points: 1000, q: "This communication channel is strongest for initially building a team's TMS.", a: "What is face-to-face?" }
+          ]
+        },
+        {
+          name: "Networks",
+          questions: [
+            { points: 200, q: "A neighbor you wave to but have never had a real conversation with is an example of this type of tie.", a: "What is a weak tie?" },
+            { points: 400, q: "This network measure tells us the proportion of possible connections that actually exist.", a: "What is density?" },
+            { points: 600, q: "The concept of 'six degrees of separation' relates to this network measure.", a: "What is average path length?" },
+            { points: 800, q: "A person who connects the marketing team and the engineering team, groups that otherwise never talk, occupies this advantageous position.", a: "What is a broker?" },
+            { points: 1000, q: "This statistic measures how often triangles close, or how likely two people who share a friend are also friends.", a: "What is transitivity?" }
+          ]
+        },
+        {
+          name: "Tech Management",
+          questions: [
+            { points: 200, q: "This algorithm feature selectively shows some content while hiding other content.", a: "What is curation?" },
+            { points: 400, q: "An AI trained mostly on data from one demographic makes poor predictions for other groups. This illustrates this feature of algorithms.", a: "What is inherent bias?" },
+            { points: 600, q: "In Coleman's Boat, a company's policies and management philosophy represent this level.", a: "What is structure?" },
+            { points: 800, q: "In Coleman's Boat, worker behaviors represent this level.", a: "What is action / the system?" },
+            { points: 1000, q: "Algorithms have this feature because they encode values and serve their designers' interests.", a: "What is never apolitical / political?" }
+          ]
+        },
+        {
+          name: "Tech Adoption",
+          questions: [
+            { points: 200, q: "TAM says adoption depends on these two perceptions about technology.", a: "What are perceived usefulness and perceived ease of use?" },
+            { points: 400, q: "Someone who waits to adopt new technology until most of their colleagues are already using it and it seems safe.", a: "Who is late majority?" },
+            { points: 600, q: "Posting your achievements publicly on social media to shape how others see you reflects this motivation for technology use.", a: "What is impression management?" },
+            { points: 800, q: "This adopter waits until technology is proven and clearly useful before trying it.", a: "Who is early majority / pragmatist?" },
+            { points: 1000, q: "In relational sociomateriality, entities have a material property (physical) and this property (connections to others).", a: "What is social property?" }
+          ]
+        }
+      ]
+    };
+
+    let scores = { left: 0, middle: 0, right: 0 };
+    let usedQuestions = new Set();
+    let currentQuestion = null;
+    let timerInterval = null;
+    let timeLeft = 20;
+    let timerRunning = false;
+
+    function render() {
+      const app = document.getElementById('app');
+      
+      if (currentQuestion) {
+        app.innerHTML = renderQuestion();
+      } else {
+        app.innerHTML = renderBoard();
+      }
+    }
+
+    function renderBoard() {
+      let html = `
+        <div class="text-center mb-4">
+          <h1 class="jeopardy-title text-4xl font-bold text-yellow-400 mb-2">COMM 136 JEOPARDY</h1>
+          <p class="text-blue-200 text-sm">Midterm Review Edition</p>
+        </div>
+
+        <div class="flex justify-center gap-4 mb-4">
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Left Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.left}</div>
+          </div>
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Middle Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.middle}</div>
+          </div>
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Right Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.right}</div>
+          </div>
+          <button onclick="resetGame()" class="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">
+            Reset
+          </button>
+        </div>
+
+        <div class="grid grid-cols-6 gap-2">
+      `;
+
+      // Category headers
+      gameData.categories.forEach((cat, i) => {
+        html += `
+          <div class="bg-blue-800 p-3 text-center rounded-t-lg">
+            <span class="text-yellow-400 font-bold text-sm leading-tight block">${cat.name}</span>
+          </div>
+        `;
+      });
+
+      // Questions grid
+      for (let qIndex = 0; qIndex < 5; qIndex++) {
+        gameData.categories.forEach((cat, catIndex) => {
+          const key = `${catIndex}-${qIndex}`;
+          const isUsed = usedQuestions.has(key);
+          if (isUsed) {
+            html += `<div class="bg-blue-950 p-4 text-center rounded text-blue-800"></div>`;
+          } else {
+            html += `
+              <button onclick="selectQuestion(${catIndex}, ${qIndex})" 
+                class="bg-blue-700 hover:bg-blue-600 p-4 text-center rounded text-yellow-400 font-bold text-xl cursor-pointer transition-all">
+                $${cat.questions[qIndex].points}
+              </button>
+            `;
+          }
+        });
+      }
+
+      html += `
+        </div>
+        <div class="mt-6 text-center text-blue-300 text-sm">
+          <p>Click a dollar amount to reveal the question. Answers must be in the form of a question!</p>
+        </div>
+      `;
+
+      return html;
+    }
+
+    function renderQuestion() {
+      const cat = gameData.categories[currentQuestion.catIndex];
+      const q = cat.questions[currentQuestion.qIndex];
+
+      let html = `
+        <div class="text-center mb-4">
+          <h1 class="jeopardy-title text-4xl font-bold text-yellow-400 mb-2">COMM 136 JEOPARDY</h1>
+        </div>
+
+        <div class="flex justify-center gap-4 mb-4">
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Left Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.left}</div>
+          </div>
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Middle Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.middle}</div>
+          </div>
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Right Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.right}</div>
+          </div>
+        </div>
+
+        <div class="bg-blue-800 rounded-lg p-8 text-center">
+          <div class="text-yellow-400 text-lg mb-2">${cat.name} - $${q.points}</div>
+          <div class="text-white text-2xl mb-6 leading-relaxed">${q.q}</div>
+          
+          <div id="timer-section" class="mb-6">
+            <div class="flex justify-center items-center gap-4">
+              <div id="timer-display" class="timer-circle bg-green-600 text-white">20</div>
+            </div>
+            <div class="mt-4 flex justify-center gap-3">
+              <button onclick="startTimer()" id="start-btn" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold">
+                ▶ Start Timer
+              </button>
+              <button onclick="stopTimer()" id="stop-btn" class="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-bold" disabled>
+                ⏹ Stop
+              </button>
+            </div>
+          </div>
+          
+          <div id="answer-section">
+            <button onclick="showAnswer()" class="bg-yellow-500 hover:bg-yellow-400 text-blue-900 font-bold px-8 py-3 rounded-lg text-lg">
+              Reveal Answer
+            </button>
+          </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+          <button onclick="backToBoard()" class="text-blue-300 hover:text-white underline">
+            ← Back to Board (no points)
+          </button>
+        </div>
+      `;
+
+      return html;
+    }
+
+    function selectQuestion(catIndex, qIndex) {
+      currentQuestion = { catIndex, qIndex };
+      timeLeft = 20;
+      timerRunning = false;
+      render();
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      
+      timerRunning = true;
+      document.getElementById('start-btn').disabled = true;
+      document.getElementById('stop-btn').disabled = false;
+      
+      const music = document.getElementById('jeopardy-music');
+      music.currentTime = 0;
+      music.play().catch(e => console.log('Audio play failed:', e));
+      
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        
+        if (timeLeft <= 0) {
+          stopTimer();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      
+      const music = document.getElementById('jeopardy-music');
+      music.pause();
+      
+      document.getElementById('start-btn').disabled = true;
+      document.getElementById('stop-btn').disabled = true;
+      
+      const timerDisplay = document.getElementById('timer-display');
+      timerDisplay.classList.remove('bg-green-600', 'bg-yellow-500');
+      timerDisplay.classList.add('bg-red-600');
+      timerDisplay.textContent = "TIME";
+    }
+
+    function updateTimerDisplay() {
+      const timerDisplay = document.getElementById('timer-display');
+      timerDisplay.textContent = timeLeft;
+      
+      timerDisplay.classList.remove('bg-green-600', 'bg-yellow-500', 'bg-red-600');
+      
+      if (timeLeft > 10) {
+        timerDisplay.classList.add('bg-green-600');
+      } else if (timeLeft > 5) {
+        timerDisplay.classList.add('bg-yellow-500');
+      } else {
+        timerDisplay.classList.add('bg-red-600');
+      }
+    }
+
+    function showAnswer() {
+      clearInterval(timerInterval);
+      const music = document.getElementById('jeopardy-music');
+      music.pause();
+      
+      const cat = gameData.categories[currentQuestion.catIndex];
+      const q = cat.questions[currentQuestion.qIndex];
+
+      document.getElementById('timer-section').innerHTML = '';
+      document.getElementById('answer-section').innerHTML = `
+        <div class="bg-blue-700 p-4 rounded-lg mb-6">
+          <div class="text-yellow-400 text-xl">${q.a}</div>
+        </div>
+        <div class="text-blue-200 mb-3">Who answered correctly?</div>
+        <div class="flex justify-center gap-3 flex-wrap">
+          <button onclick="scoreTeam('left', ${q.points})" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg">
+            Left (+$${q.points})
+          </button>
+          <button onclick="scoreTeam('middle', ${q.points})" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg">
+            Middle (+$${q.points})
+          </button>
+          <button onclick="scoreTeam('right', ${q.points})" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg">
+            Right (+$${q.points})
+          </button>
+          <button onclick="noScore()" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg">
+            No One
+          </button>
+        </div>
+      `;
+    }
+
+    function scoreTeam(team, points) {
+      scores[team] += points;
+      usedQuestions.add(`${currentQuestion.catIndex}-${currentQuestion.qIndex}`);
+      currentQuestion = null;
+      render();
+    }
+
+    function noScore() {
+      usedQuestions.add(`${currentQuestion.catIndex}-${currentQuestion.qIndex}`);
+      currentQuestion = null;
+      render();
+    }
+
+    function backToBoard() {
+      clearInterval(timerInterval);
+      const music = document.getElementById('jeopardy-music');
+      music.pause();
+      currentQuestion = null;
+      render();
+    }
+
+    function resetGame() {
+      scores = { left: 0, middle: 0, right: 0 };
+      usedQuestions = new Set();
+      currentQuestion = null;
+      clearInterval(timerInterval);
+      const music = document.getElementById('jeopardy-music');
+      music.pause();
+      render();
+    }
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
