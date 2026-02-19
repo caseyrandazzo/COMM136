@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Inbox</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #f6f8fc;
+    color: #202124;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 64px;
+    flex-shrink: 0;
+  }
+
+  .topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 200px;
+  }
+
+  .topbar-logo svg { width: 40px; height: 40px; }
+
+  .topbar-logo span {
+    font-size: 22px;
+    color: #5f6368;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+  }
+
+  .search-bar {
+    flex: 1;
+    max-width: 720px;
+    background: #eaf1fb;
+    border-radius: 28px;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .search-bar svg { color: #5f6368; flex-shrink: 0; }
+
+  .search-bar input {
+    border: none;
+    background: none;
+    outline: none;
+    font-size: 16px;
+    font-family: 'Roboto', sans-serif;
+    color: #202124;
+    width: 100%;
+  }
+
+  .search-bar input::placeholder { color: #5f6368; }
+
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #1a73e8;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 256px;
+    background: #f6f8fc;
+    padding: 8px 0 8px 8px;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .compose-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 24px;
+    margin: 4px 16px 12px 8px;
+    background: #c2e7ff;
+    border: none;
+    border-radius: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Roboto', sans-serif;
+    color: #001d35;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+  }
+
+  .compose-btn:hover { box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px;
+    height: 32px;
+    border-radius: 0 16px 16px 0;
+    font-size: 14px;
+    color: #444746;
+    cursor: pointer;
+    font-weight: 500;
+  }
+
+  .nav-item.active {
+    background: #d3e3fd;
+    color: #001d35;
+    font-weight: 600;
+  }
+
+  .nav-item svg { width: 20px; height: 20px; color: inherit; }
+
+  .nav-badge {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 16px 0 0 0;
+    overflow: hidden;
+  }
+
+  .email-list {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .email-row {
+    display: flex;
+    align-items: center;
+    padding: 4px 16px;
+    height: 40px;
+    border-bottom: 1px solid #f1f3f4;
+    cursor: pointer;
+    transition: background 0.1s;
+    font-size: 14px;
+  }
+
+  .email-row:hover { background: #f2f2f2; box-shadow: inset 0 -1px 0 #e0e0e0; }
+  .email-row.active { background: #e8f0fe; }
+  .email-row.unread .email-sender { font-weight: 700; color: #202124; }
+  .email-row.unread .email-subject { font-weight: 600; color: #202124; }
+
+  .email-checkbox {
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .email-checkbox input { width: 18px; height: 18px; cursor: pointer; accent-color: #1a73e8; }
+
+  .email-star {
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #dadce0;
+    cursor: pointer;
+  }
+
+  .email-star:hover { color: #f4b400; }
+
+  .email-sender {
+    width: 200px;
+    flex-shrink: 0;
+    font-size: 14px;
+    color: #5f6368;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 12px;
+  }
+
+  .email-subject {
+    font-size: 14px;
+    color: #202124;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-shrink: 0;
+  }
+
+  .email-snippet {
+    font-size: 14px;
+    color: #5f6368;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    margin-left: 4px;
+  }
+
+  .email-date {
+    font-size: 12px;
+    color: #5f6368;
+    flex-shrink: 0;
+    margin-left: 12px;
+    min-width: 60px;
+    text-align: right;
+  }
+
+  .email-row.unread .email-date { font-weight: 600; color: #202124; }
+
+  .email-detail {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  .email-detail.visible { display: block; }
+  .email-list.hidden { display: none; }
+
+  .detail-header { padding: 24px 60px 0 60px; }
+
+  .detail-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #5f6368;
+    font-size: 14px;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-family: 'Roboto', sans-serif;
+    padding: 8px 0;
+    margin-bottom: 8px;
+  }
+
+  .detail-back:hover { color: #202124; }
+
+  .detail-subject {
+    font-size: 22px;
+    font-weight: 400;
+    color: #202124;
+    line-height: 1.4;
+    margin-bottom: 20px;
+  }
+
+  .detail-meta {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .sender-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .sender-info { flex: 1; }
+
+  .sender-name { font-size: 14px; font-weight: 500; color: #202124; }
+  .sender-email { font-size: 12px; color: #5f6368; }
+  .sender-to { font-size: 12px; color: #5f6368; margin-top: 2px; }
+
+  .detail-date {
+    font-size: 12px;
+    color: #5f6368;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .detail-body {
+    padding: 24px 60px 60px 60px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #202124;
+    max-width: 800px;
+  }
+
+  .detail-body p { margin-bottom: 16px; }
+  .detail-body .deliverable { font-weight: 700; }
+
+  .detail-body .signature {
+    margin-top: 28px;
+    line-height: 1.6;
+  }
+
+  .detail-body .sig-name { color: #202124; font-weight: 500; font-size: 14px; }
+  .detail-body .sig-title { color: #5f6368; font-size: 13px; }
+  .detail-body .sig-org { color: #5f6368; font-size: 13px; }
+
+  .select-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #5f6368;
+    gap: 16px;
+    padding: 40px;
+  }
+
+  .select-prompt svg { width: 120px; height: 120px; color: #dadce0; }
+  .select-prompt p { font-size: 18px; }
+
+  .team-select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid #dadce0;
+    font-size: 13px;
+    font-family: 'Roboto', sans-serif;
+    color: #202124;
+    background: #fff;
+    cursor: pointer;
+    outline: none;
+    min-width: 220px;
+  }
+
+  .team-select:focus { border-color: #1a73e8; }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    padding: 4px 16px;
+    height: 48px;
+    border-bottom: 1px solid #e0e0e0;
+    gap: 4px;
+  }
+
+  .toolbar-btn {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #5f6368;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .toolbar-btn:hover { background: #f2f2f2; }
+
+  .toolbar-divider {
+    width: 1px;
+    height: 20px;
+    background: #e0e0e0;
+    margin: 0 8px;
+  }
+
+  .toolbar-pagination {
+    margin-left: auto;
+    font-size: 12px;
+    color: #5f6368;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <svg viewBox="0 0 40 40" fill="none">
+      <rect width="40" height="40" rx="4" fill="transparent"/>
+      <path d="M4 10L20 22L36 10" stroke="#EA4335" stroke-width="2" fill="none"/>
+      <rect x="4" y="8" width="32" height="24" rx="2" stroke="#4285F4" stroke-width="2" fill="none"/>
+      <path d="M4 32L16 20" stroke="#34A853" stroke-width="2"/>
+      <path d="M36 32L24 20" stroke="#FBBC05" stroke-width="2"/>
+    </svg>
+    <span>Mail</span>
+  </div>
+  <div class="search-bar">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+    <input type="text" placeholder="Search mail">
+  </div>
+  <div class="topbar-right">
+    <div class="avatar">CR</div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="sidebar">
+    <button class="compose-btn">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      Compose
+    </button>
+    <div class="nav-item active">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      Inbox
+      <span class="nav-badge">1</span>
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      Starred
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+      Sent
+    </div>
+    <div class="nav-item">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>
+      Drafts
+    </div>
+    
+    <div style="padding: 20px 16px 8px 32px; border-top: 1px solid #e0e0e0; margin-top: 16px;">
+      <div style="font-size: 13px; color: #5f6368; font-weight: 500;">Select your client:</div>
+      <select class="team-select" id="teamSelect" style="margin-top: 8px; width: 100%;">
+        <option value="">Choose client...</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="toolbar">
+      <button class="toolbar-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+      <div class="toolbar-divider"></div>
+      <button class="toolbar-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+      <div class="toolbar-pagination">1 of 1</div>
+    </div>
+
+    <div class="email-list" id="emailList">
+      <div class="select-prompt" id="selectPrompt">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <p>Select your client from the sidebar to view your message</p>
+      </div>
+    </div>
+
+    <div class="email-detail" id="emailDetail">
+      <div class="detail-header">
+        <button class="detail-back" id="backBtn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+          Back to Inbox
+        </button>
+        <div class="detail-subject" id="detailSubject"></div>
+        <div class="detail-meta">
+          <div class="sender-avatar" id="senderAvatar"></div>
+          <div class="sender-info">
+            <div class="sender-name" id="senderName"></div>
+            <div class="sender-email" id="senderEmail"></div>
+            <div class="sender-to">to me</div>
+          </div>
+          <div class="detail-date" id="detailDate"></div>
+        </div>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const clients = [
+  {
+    org: "Iron Bridge Brewing (Example)",
+    sender: "Jake Riordan",
+    title: "Taproom Manager",
+    email: "jake@ironbridgebrewing.com",
+    color: "#5D4037",
+    initial: "JR",
+    subject: "Need your help with something",
+    snippet: "A bad batch of our flagship IPA made several customers sick last week...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>A bad batch of our flagship IPA made several customers sick last week. It made the local news. Health inspectors have cleared us, it was an isolated contamination issue and it's been fixed, but social media is full of people saying they'll never come back. We need you to write us <span class="deliverable">a social media post and an email to our mailing list</span> that addresses what happened. Be honest but don't grovel. Make it sound like us. We're a neighborhood brewery, not a corporation doing damage control.</p>
+<p>In addition to those, we're open to hearing any other ideas you have for how we should be handling this. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Jake Riordan</span><br>
+<span class="sig-title">Taproom Manager</span><br>
+<span class="sig-org">Iron Bridge Brewing</span>
+</div>`
+  },
+  {
+    org: "Blue Ocean Aquarium",
+    sender: "Derek Johnson",
+    title: "Director of Marketing & Communications",
+    email: "djohnson@blueoceanbaltimore.org",
+    color: "#0277BD",
+    initial: "DJ",
+    subject: "Need your help with something",
+    snippet: "Animal welfare activists have been targeting aquariums on social media...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Animal welfare activists have been targeting aquariums on social media, including us. We're getting comments like "Aquariums are prisons" and "If you really cared about animals you'd release them" on almost every post. We need you to write us <span class="deliverable">a social media post</span> that proactively makes the case for why Blue Ocean exists, before we're on the defensive. It needs to sound like us: not corporate, not defensive, not preachy. We want people to walk away understanding why we exist, not feeling like we're arguing with them.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we should be handling this. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Derek Johnson</span><br>
+<span class="sig-title">Director of Marketing & Communications</span><br>
+<span class="sig-org">Blue Ocean Aquarium</span>
+</div>`
+  },
+  {
+    org: "Bridgewater Community Foundation",
+    sender: "Andre Thompson",
+    title: "Communications Director",
+    email: "athompson@bridgewaterfoundation.org",
+    color: "#2E7D32",
+    initial: "AT",
+    subject: "Need your help with something",
+    snippet: "We're trying to reach donors under 40 and we're basically invisible to them...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>We're trying to reach donors under 40 and we're basically invisible to them. They probably don't even know what a community foundation is. We need you to write us <span class="deliverable">a social media post</span> that would make a young professional stop scrolling and actually want to learn more about Bridgewater.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can connect with this audience. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Andre Thompson</span><br>
+<span class="sig-title">Communications Director</span><br>
+<span class="sig-org">Bridgewater Community Foundation</span>
+</div>`
+  },
+  {
+    org: "Catalyst Coworking",
+    sender: "Sophie Chen",
+    title: "Marketing Director",
+    email: "sophie@catalystcoworking.com",
+    color: "#E65100",
+    initial: "SC",
+    subject: "Need your help with something",
+    snippet: "We keep losing potential members to national chains...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>We keep losing potential members to national chains and landlords who are adding flex space to their buildings. People tour our space, love it, and then sign up somewhere cheaper. We need you to write us <span class="deliverable">a social media post</span> that shows why Catalyst is worth it. Don't trash the competition, just make it clear what people get with us that they won't get anywhere else.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can stand out. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Sophie Chen</span><br>
+<span class="sig-title">Marketing Director</span><br>
+<span class="sig-org">Catalyst Coworking</span>
+</div>`
+  },
+  {
+    org: "Compass Housing Alliance",
+    sender: "Eric Johansson",
+    title: "Communications Manager",
+    email: "ejohansson@compasshousing.org",
+    color: "#4527A0",
+    initial: "EJ",
+    subject: "Need your help with something",
+    snippet: "Our new supportive housing building downtown is getting community pushback...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Our new supportive housing building downtown is getting community pushback. The next neighborhood meeting is in two weeks. We need you to write us <span class="deliverable">a social media post</span> we can share before the meeting that addresses residents' biggest concerns (safety, property values, who's moving in) and invites them to come hear the facts. It needs to be honest, calm, and human. If it sounds like a press release, people will tune out.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can build community support. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Eric Johansson</span><br>
+<span class="sig-title">Communications Manager</span><br>
+<span class="sig-org">Compass Housing Alliance</span>
+</div>`
+  },
+  {
+    org: "Evergreen Senior Living",
+    sender: "Michelle Torres",
+    title: "Marketing & Communications Director",
+    email: "mtorres@evergreensenior.com",
+    color: "#1B5E20",
+    initial: "MT",
+    subject: "Need your help with something",
+    snippet: "Families researching senior care are more anxious than ever...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Families researching senior care are more anxious than ever because of bad press about other facilities. Our sales team keeps hearing "how do we know you're different?" We need you to write us <span class="deliverable">a social media post</span> that reassures families we're not like the places they've been reading about, without sounding defensive or salesy. These are people making one of the hardest decisions of their lives.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can build trust with these families. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Michelle Torres</span><br>
+<span class="sig-title">Marketing & Communications Director</span><br>
+<span class="sig-org">Evergreen Senior Living</span>
+</div>`
+  },
+  {
+    org: "Futures Academy",
+    sender: "Christina Reyes",
+    title: "Communications Director",
+    email: "creyes@futuresacademy.org",
+    color: "#C62828",
+    initial: "CR",
+    subject: "Need your help with something",
+    snippet: "Parents and even some school counselors are questioning whether college is worth it...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Parents and even some school counselors are questioning whether college is worth it. Our enrollment season starts soon. We need you to write us <span class="deliverable">a social media post</span> that makes the case for college, and specifically for what Futures Academy does, without sounding preachy or out of touch.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can address this skepticism. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Christina Reyes</span><br>
+<span class="sig-title">Communications Director</span><br>
+<span class="sig-org">Futures Academy</span>
+</div>`
+  },
+  {
+    org: "GreenLeaf Environmental",
+    sender: "Tom Brennan",
+    title: "Communications Manager",
+    email: "tbrennan@greenleafenv.com",
+    color: "#33691E",
+    initial: "TB",
+    subject: "Need your help with something",
+    snippet: "Our clients keep asking us what's the ROI of sustainability...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Our clients keep asking us "what's the ROI of sustainability?" and we don't have a great answer ready. We need you to write us <span class="deliverable">an email we can send to current and prospective clients</span> that makes the business case for sustainability, not the environmental case. Think bottom line, risk reduction, competitive advantage. It needs to sound like us: data driven and practical, not idealistic.</p>
+<p>In addition to the email, we're open to hearing any other ideas you have for how we can make this case more effectively. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Tom Brennan</span><br>
+<span class="sig-title">Communications Manager</span><br>
+<span class="sig-org">GreenLeaf Environmental</span>
+</div>`
+  },
+  {
+    org: "Harmony Music Conservatory",
+    sender: "Nina Patel",
+    title: "Marketing & Enrollment Manager",
+    email: "npatel@harmonymusic.org",
+    color: "#6A1B9A",
+    initial: "NP",
+    subject: "Need your help with something",
+    snippet: "Parents keep asking us why they should pay for in-person lessons...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Parents keep asking us why they should pay for in-person lessons when their kid can learn on an app for $10/month. We need you to write us <span class="deliverable">a social media post</span> that shows the value of in-person music education at Harmony without bashing the apps. It should make parents feel excited, not guilty.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can communicate our value. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Nina Patel</span><br>
+<span class="sig-title">Marketing & Enrollment Manager</span><br>
+<span class="sig-org">Harmony Music Conservatory</span>
+</div>`
+  },
+  {
+    org: "Horizon Health Solutions",
+    sender: "James Chen",
+    title: "Director of Communications",
+    email: "jchen@horizonhealth.com",
+    color: "#00695C",
+    initial: "JC",
+    subject: "Need your help with something",
+    snippet: "After a competitor's data breach, our clients are nervous...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>After a competitor's data breach, our clients are nervous about how we handle employee health data. We haven't had any issues, but the anxiety is real. We need you to write us <span class="deliverable">an email we can proactively send to all current clients</span> reassuring them about our data practices. It can't be vague, they want specifics. But it also can't be so technical that their eyes glaze over. Make it sound like us: warm, professional, and trustworthy.</p>
+<p>In addition to the email, we're open to hearing any other ideas you have for how we can get ahead of this. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">James Chen</span><br>
+<span class="sig-title">Director of Communications</span><br>
+<span class="sig-org">Horizon Health Solutions</span>
+</div>`
+  },
+  {
+    org: "Northwind Logistics",
+    sender: "Megan Walsh",
+    title: "Marketing & Communications Manager",
+    email: "mwalsh@northwindlogistics.com",
+    color: "#37474F",
+    initial: "MW",
+    subject: "Need your help with something",
+    snippet: "We desperately need to hire drivers and our current job postings aren't cutting it...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>We desperately need to hire drivers and our current job postings aren't cutting it. Drivers have a million options right now. We need you to write us <span class="deliverable">a social media post</span> that would make a driver want to work for Northwind. Speak to what drivers actually care about: pay, home time, equipment, respect. Don't make it sound like every other trucking company. Make it sound like us.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can recruit better. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Megan Walsh</span><br>
+<span class="sig-title">Marketing & Communications Manager</span><br>
+<span class="sig-org">Northwind Logistics</span>
+</div>`
+  },
+  {
+    org: "Peak Performance Athletics",
+    sender: "Jasmine Brooks",
+    title: "Marketing Director",
+    email: "jbrooks@peakperformanceathletics.com",
+    color: "#BF360C",
+    initial: "JB",
+    subject: "Need your help with something",
+    snippet: "Budget fitness chains are offering athletic training at half our price...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Budget fitness chains are offering "athletic training" at half our price and parents are asking us why we cost more. We need you to write us <span class="deliverable">a social media post</span> that shows the difference between what we do and what a budget gym does, without naming names or sounding arrogant. Show don't tell. Make parents feel like "okay, THIS is where my kid needs to be."</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can communicate our value. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Jasmine Brooks</span><br>
+<span class="sig-title">Marketing Director</span><br>
+<span class="sig-org">Peak Performance Athletics</span>
+</div>`
+  },
+  {
+    org: "Redwood Credit Union",
+    sender: "Jennifer Wu",
+    title: "VP of Marketing",
+    email: "jwu@redwoodcu.org",
+    color: "#B71C1C",
+    initial: "JW",
+    subject: "Need your help with something",
+    snippet: "Big banks keep raising fees and people are frustrated...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Big banks keep raising fees and people are frustrated, but most of them don't even know we exist as an option. We need you to write us <span class="deliverable">a social media post</span> targeting people who are fed up with their bank that makes them curious enough to learn more about Redwood. Don't use jargon like "member-owned cooperative." Speak their language.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can reach these people. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Jennifer Wu</span><br>
+<span class="sig-title">VP of Marketing</span><br>
+<span class="sig-org">Redwood Credit Union</span>
+</div>`
+  },
+  {
+    org: "Riverbend Arts Collective",
+    sender: "Sam Porter",
+    title: "Marketing Manager",
+    email: "sam@riverbendarts.org",
+    color: "#AD1457",
+    initial: "SP",
+    subject: "Need your help with something",
+    snippet: "We need to diversify our revenue beyond grants and major donors...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>We need to diversify our revenue beyond grants and major donors, but we're not sure how to ask for support without losing our community-first feel. We need you to write us <span class="deliverable">a social media post</span> that encourages our community (people who've taken classes, attended events, or volunteered) to donate for the first time. Make the ask feel natural, not transactional.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can grow support. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Sam Porter</span><br>
+<span class="sig-title">Marketing Manager</span><br>
+<span class="sig-org">Riverbend Arts Collective</span>
+</div>`
+  },
+  {
+    org: "Safe Haven Animal Rescue",
+    sender: "Jackie Reynolds",
+    title: "Marketing & Outreach Coordinator",
+    email: "jreynolds@safehavenrescue.org",
+    color: "#F57F17",
+    initial: "JR",
+    subject: "Need your help with something",
+    snippet: "Adoptions are down and we can't recruit enough foster homes...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Adoptions are down and we can't recruit enough foster homes. We're getting squeezed from both sides. We need you to write us <span class="deliverable">a social media post</span> that encourages people to either foster or adopt. It should feel like Safe Haven: heartfelt, hopeful, not guilt trippy. We want people to feel excited, not sad.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can turn this around. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Jackie Reynolds</span><br>
+<span class="sig-title">Marketing & Outreach Coordinator</span><br>
+<span class="sig-org">Safe Haven Animal Rescue</span>
+</div>`
+  },
+  {
+    org: "Second Harvest Food Bank",
+    sender: "David Kim",
+    title: "Communications Director",
+    email: "dkim@secondharvest.org",
+    color: "#E65100",
+    initial: "DK",
+    subject: "Need your help with something",
+    snippet: "Donors think the hunger crisis is over because the pandemic is over...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>Donors think the hunger crisis is over because the pandemic is "over." It's not. Our distribution is still 50% above pre-pandemic levels. We need you to write us <span class="deliverable">a social media post</span> that re-engages people who cared during the pandemic but have drifted away. Don't guilt them. Don't lecture them. Remind them why they gave in the first place and show them the need is still here.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can re-engage these donors. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">David Kim</span><br>
+<span class="sig-title">Communications Director</span><br>
+<span class="sig-org">Second Harvest Food Bank</span>
+</div>`
+  },
+  {
+    org: "Sunnyside Veterinary Group",
+    sender: "Amanda Liu",
+    title: "Marketing & Community Relations Director",
+    email: "aliu@sunnysidevet.com",
+    color: "#FF8F00",
+    initial: "AL",
+    subject: "Need your help with something",
+    snippet: "We're acquiring two independent vet clinics and rebranding them...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>We're acquiring two independent vet clinics and rebranding them as Sunnyside locations. The pet owners at those clinics are loyal to the old names and the old vets, some have been going there for years. We need you to write us <span class="deliverable">an email from Dr. Mitchell to the pet owners at the acquired clinics</span> announcing the change. It needs to honor what they loved about their old clinic while making them feel good about what's coming. If it sounds corporate, we've already lost them.</p>
+<p>In addition to the email, we're open to hearing any other ideas you have for how we can make this transition smooth. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Amanda Liu</span><br>
+<span class="sig-title">Marketing & Community Relations Director</span><br>
+<span class="sig-org">Sunnyside Veterinary Group</span>
+</div>`
+  },
+  {
+    org: "TechBridge Solutions",
+    sender: "Karen O'Brien",
+    title: "Marketing Director",
+    email: "kobrien@techbridgesolutions.com",
+    color: "#283593",
+    initial: "KO",
+    subject: "Need your help with something",
+    snippet: "After the ransomware attack on another IT provider...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>After the ransomware attack on another IT provider, we're getting calls from companies who are scared of their current provider and looking to switch. We need you to write us <span class="deliverable">an email we can send to these prospects</span> that positions TechBridge as the safe, reliable choice, without fearmongering about the competition. Be specific about what we do, not vague about what they should be afraid of.</p>
+<p>In addition to the email, we're open to hearing any other ideas you have for how we can win these prospects over. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Karen O'Brien</span><br>
+<span class="sig-title">Marketing Director</span><br>
+<span class="sig-org">TechBridge Solutions</span>
+</div>`
+  },
+  {
+    org: "Trailhead Outdoor Gear",
+    sender: "Mia Johansson",
+    title: "Marketing Director",
+    email: "mia@trailheadgear.com",
+    color: "#2E7D32",
+    initial: "MJ",
+    subject: "Need your help with something",
+    snippet: "We can't compete with Amazon on price and we shouldn't try...",
+    body: `<p>Hi all, we're excited to work with you. We've got something specific we need help with right away.</p>
+<p>We can't compete with Amazon on price and we shouldn't try. But we need to give people a reason to buy from us instead. We need you to write us <span class="deliverable">a social media post</span> that shows what you get from Trailhead that you'll never get from Amazon. Think expert advice, community, try before you buy, the experience of walking into a store where the staff actually uses the gear. Make people feel something, not just see a product.</p>
+<p>In addition to the post, we're open to hearing any other ideas you have for how we can differentiate ourselves. We brought you on because we need fresh thinking, so don't hold back.</p>
+<div class="signature">
+<span class="sig-name">Mia Johansson</span><br>
+<span class="sig-title">Marketing Director</span><br>
+<span class="sig-org">Trailhead Outdoor Gear</span>
+</div>`
+  }
+];
+
+const select = document.getElementById('teamSelect');
+clients.forEach((c, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = c.org;
+  select.appendChild(opt);
+});
+
+const emailList = document.getElementById('emailList');
+const emailDetail = document.getElementById('emailDetail');
+const selectPrompt = document.getElementById('selectPrompt');
+
+function showInbox(clientIndex) {
+  const c = clients[clientIndex];
+  emailList.innerHTML = '';
+  emailDetail.classList.remove('visible');
+  emailList.classList.remove('hidden');
+
+  const row = document.createElement('div');
+  row.className = 'email-row unread';
+  row.innerHTML = `
+    <div class="email-checkbox"><input type="checkbox"></div>
+    <div class="email-star"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+    <div class="email-sender">${c.sender}</div>
+    <div class="email-subject">${c.subject}</div>
+    <div class="email-snippet"> — ${c.snippet}</div>
+    <div class="email-date">Feb 23</div>
+  `;
+  row.addEventListener('click', (e) => {
+    if (e.target.type === 'checkbox') return;
+    showDetail(clientIndex);
+  });
+  emailList.appendChild(row);
+}
+
+function showDetail(clientIndex) {
+  const c = clients[clientIndex];
+  emailList.classList.add('hidden');
+  emailDetail.classList.add('visible');
+
+  document.getElementById('detailSubject').textContent = c.subject;
+  document.getElementById('senderAvatar').style.backgroundColor = c.color;
+  document.getElementById('senderAvatar').textContent = c.initial;
+  document.getElementById('senderName').textContent = `${c.sender} <${c.email}>`;
+  document.getElementById('senderEmail').textContent = c.title + ', ' + c.org;
+  document.getElementById('detailDate').textContent = 'Feb 23, 2026, 10:23 AM';
+  document.getElementById('detailBody').innerHTML = c.body;
+}
+
+document.getElementById('backBtn').addEventListener('click', () => {
+  emailDetail.classList.remove('visible');
+  emailList.classList.remove('hidden');
+});
+
+select.addEventListener('change', (e) => {
+  if (e.target.value === '') {
+    emailList.innerHTML = '';
+    emailList.appendChild(selectPrompt);
+    selectPrompt.style.display = 'flex';
+    emailDetail.classList.remove('visible');
+    emailList.classList.remove('hidden');
+  } else {
+    selectPrompt.style.display = 'none';
+    showInbox(parseInt(e.target.value));
+  }
+});
+</script>
+
+</body>
+</html>
