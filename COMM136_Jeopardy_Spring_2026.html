@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>COMM 136 Jeopardy - Midterm Review</title>
+  <style>
+    /* Base */
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Georgia', serif;
+      background-color: #1e3a8a; /* blue-900 */
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
+    }
+    .jeopardy-title { font-family: 'Impact', sans-serif; letter-spacing: 2px; }
+    .timer-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      transition: background-color 0.3s;
+    }
+
+    /* Layout */
+    .max-w-6xl { max-width: 72rem; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .text-center { text-align: center; }
+    .flex { display: flex; }
+    .grid { display: grid; }
+    .grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .justify-center { justify-content: center; }
+    .items-center { align-items: center; }
+    .flex-wrap { flex-wrap: wrap; }
+    .block { display: block; }
+    .min-w-32 { min-width: 8rem; }
+    .cursor-pointer { cursor: pointer; }
+    .transition-all { transition: all 0.2s; }
+    .underline { text-decoration: underline; }
+    .leading-tight { line-height: 1.25; }
+    .leading-relaxed { line-height: 1.625; }
+
+    /* Spacing */
+    .p-3 { padding: 0.75rem; }
+    .p-4 { padding: 1rem; }
+    .p-8 { padding: 2rem; }
+    .px-4 { padding-left: 1rem; padding-right: 1rem; }
+    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .px-8 { padding-left: 2rem; padding-right: 2rem; }
+    .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-6 { margin-top: 1.5rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-4 { gap: 1rem; }
+
+    /* Typography */
+    .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+    .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+    .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+    .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+    .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+    .font-bold { font-weight: 700; }
+
+    /* Borders / radius */
+    .rounded { border-radius: 0.25rem; }
+    .rounded-lg { border-radius: 0.5rem; }
+    .rounded-t-lg { border-top-left-radius: 0.5rem; border-top-right-radius: 0.5rem; }
+
+    /* Colors — backgrounds */
+    .bg-blue-950 { background-color: #172554; }
+    .bg-blue-900 { background-color: #1e3a8a; }
+    .bg-blue-800 { background-color: #1e40af; }
+    .bg-blue-700 { background-color: #1d4ed8; }
+    .bg-red-700 { background-color: #b91c1c; }
+    .bg-red-600 { background-color: #dc2626; }
+    .bg-green-600 { background-color: #16a34a; }
+    .bg-yellow-500 { background-color: #eab308; }
+    .bg-gray-600 { background-color: #4b5563; }
+
+    /* Colors — text */
+    .text-white { color: #ffffff; }
+    .text-yellow-400 { color: #facc15; }
+    .text-blue-900 { color: #1e3a8a; }
+    .text-blue-800 { color: #1e40af; }
+    .text-blue-300 { color: #93c5fd; }
+    .text-blue-200 { color: #bfdbfe; }
+
+    /* Buttons inherit font weirdness from UA — normalize */
+    button {
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
+    }
+    button[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+    /* Hovers */
+    .hover\:bg-red-600:hover { background-color: #dc2626; }
+    .hover\:bg-red-500:hover { background-color: #ef4444; }
+    .hover\:bg-blue-600:hover { background-color: #2563eb; }
+    .hover\:bg-green-500:hover { background-color: #22c55e; }
+    .hover\:bg-yellow-400:hover { background-color: #facc15; }
+    .hover\:bg-gray-500:hover { background-color: #6b7280; }
+    .hover\:text-white:hover { color: #ffffff; }
+  </style>
+</head>
+<body class="bg-blue-900">
+  <div class="max-w-6xl mx-auto" id="app"></div>
+
+  <audio id="jeopardy-music" loop>
+    <source src="https://www.myinstants.com/media/sounds/jeopardy-theme-song.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    const gameData = {
+      categories: [
+        {
+          name: "AI & Algorithms",
+          questions: [
+            { points: 200, q: "AI lives in these massive physical buildings.", a: "What are warehouses (data centers)?" },
+            { points: 400, q: "The three components of any AI system: data, decisions, and these recipe-like sets of instructions.", a: "What are algorithms?" },
+            { points: 600, q: "The algorithm feature meaning algorithms encode values and serve their designers' interests, so they are never neutral.", a: "What is never apolitical?" },
+            { points: 800, q: "The sociomaterial process where algorithms take on managerial functions like scheduling, evaluating, and disciplining workers.", a: "What is algorithmic management?" },
+            { points: 1000, q: "The framework with structure on top and system on the bottom, used to analyze the hospital AI adoption case and nurse pushback.", a: "What is Coleman's boat?" }
+          ]
+        },
+        {
+          name: "Automation",
+          questions: [
+            { points: 200, q: "Automation is defined as getting one of these to do something a human used to do.", a: "What is a machine?" },
+            { points: 400, q: "Beyond writing, evaluating options, and scheduling, this fourth communication task can be automated by machines (think filtering, ranking, or selecting content).", a: "What is curating?" },
+            { points: 600, q: "When AI takes over drafting customer emails but humans still review and send them, the writing task has been shifted onto the AI rather than eliminated. This is the term for that shift.", a: "What is displacement?" },
+            { points: 800, q: "The lens for studying automation focused on what people are saying about AI, where hype rarely matches reality.", a: "What is discourse?" },
+            { points: 1000, q: "The red flag of AI describing chatbots that agree too readily and tell users what they want to hear, even when wrong.", a: "What is sycophancy?" }
+          ]
+        },
+        {
+          name: "Perspectives",
+          questions: [
+            { points: 200, q: "The perspective assuming technology is the primary driver of social change and that humans are passive recipients.", a: "What is technological determinism?" },
+            { points: 400, q: "The perspective assuming technology is neutral and that social context determines outcomes.", a: "What is social construction?" },
+            { points: 600, q: "The perspective best explaining why police body cameras produced different results across different departments.", a: "What is social shaping?" },
+            { points: 800, q: "The view that communication brings entities to life.", a: "What is Communication as Constitutive of Organizations?" },
+            { points: 1000, q: "Cooren's concept that entities have both material and social properties and materialize through their relations.", a: "What is relational sociomateriality?" }
+          ]
+        },
+        {
+          name: "Affordances",
+          questions: [
+            { points: 200, q: "An affordance is a possibility for this.", a: "What is action?" },
+            { points: 400, q: "The 'root' affordance that most other affordances depend on.", a: "What is visibility?" },
+            { points: 600, q: "The affordance enabled by pseudonyms and anonymous usernames.", a: "What is anonymity?" },
+            { points: 800, q: "The affordance enabled by @mentions, shared folders, and org charts, showing who is connected to whom.", a: "What is association?" },
+            { points: 1000, q: "This affordance tension captures how social media makes knowledge sharing easy but raises concerns about confidentiality and job security.", a: "What is sharing vs. control?" }
+          ]
+        },
+        {
+          name: "Networks",
+          questions: [
+            { points: 200, q: "In a social network diagram, the dots representing people are called this.", a: "What are nodes?" },
+            { points: 400, q: "The resources we access through our social connections, including information, support, and opportunities.", a: "What is social capital?" },
+            { points: 600, q: "The network position held by a person who connects two clusters that would otherwise be disconnected.", a: "What is a broker?" },
+            { points: 800, q: "The network measure of how spread out one's social connections are across different social contexts.", a: "What is dispersion?" },
+            { points: 1000, q: "The type of social capital generated by weak ties that reach into different social contexts, contrasted with the bonding type from close relationships.", a: "What is bridging social capital?" }
+          ]
+        },
+        {
+          name: "TMS & Adoption",
+          questions: [
+            { points: 200, q: "The TMS dimension that answers 'who knows what' in a team.", a: "What is specialization?" },
+            { points: 400, q: "The communication channel typically strongest for initially building a team's TMS.", a: "What is face to face?" },
+            { points: 600, q: "This TMS process refers to actually accessing knowledge or assistance from the right person at the right time.", a: "What is retrieval coordination?" },
+            { points: 800, q: "In Rogers' diffusion of innovations, this group adopts a technology only after most peers already have.", a: "Who is the late majority?" },
+            { points: 1000, q: "A concern gains weight in an organizational debate by connecting to other concerns and building this.", a: "What is a coalition?" }
+          ]
+        }
+      ]
+    };
+
+    let scores = { front: 0, back: 0 };
+    let usedQuestions = new Set();
+    let currentQuestion = null;
+    let timerInterval = null;
+    let timeLeft = 30;
+    let timerRunning = false;
+
+    function render() {
+      const app = document.getElementById('app');
+      
+      if (currentQuestion) {
+        app.innerHTML = renderQuestion();
+      } else {
+        app.innerHTML = renderBoard();
+      }
+    }
+
+    function renderBoard() {
+      let html = `
+        <div class="text-center mb-4">
+          <h1 class="jeopardy-title text-4xl font-bold text-yellow-400 mb-2">COMM 136 JEOPARDY</h1>
+          <p class="text-blue-200 text-sm">Midterm Review Edition</p>
+        </div>
+
+        <div class="flex justify-center gap-4 mb-4">
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Front Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.front}</div>
+          </div>
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Back Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.back}</div>
+          </div>
+          <button onclick="resetGame()" class="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded text-sm">
+            Reset
+          </button>
+        </div>
+
+        <div class="grid grid-cols-6 gap-2">
+      `;
+
+      // Category headers
+      gameData.categories.forEach((cat, i) => {
+        html += `
+          <div class="bg-blue-800 p-3 text-center rounded-t-lg">
+            <span class="text-yellow-400 font-bold text-sm leading-tight block">${cat.name}</span>
+          </div>
+        `;
+      });
+
+      // Questions grid
+      for (let qIndex = 0; qIndex < 5; qIndex++) {
+        gameData.categories.forEach((cat, catIndex) => {
+          const key = `${catIndex}-${qIndex}`;
+          const isUsed = usedQuestions.has(key);
+          if (isUsed) {
+            html += `
+              <button onclick="selectQuestion(${catIndex}, ${qIndex}, true)"
+                class="bg-blue-950 hover:bg-blue-800 p-4 text-center rounded cursor-pointer transition-all">
+                &nbsp;
+              </button>
+            `;
+          } else {
+            html += `
+              <button onclick="selectQuestion(${catIndex}, ${qIndex})" 
+                class="bg-blue-700 hover:bg-blue-600 p-4 text-center rounded text-yellow-400 font-bold text-xl cursor-pointer transition-all">
+                $${cat.questions[qIndex].points}
+              </button>
+            `;
+          }
+        });
+      }
+
+      html += `
+        </div>
+      `;
+
+      return html;
+    }
+
+    function renderQuestion() {
+      const cat = gameData.categories[currentQuestion.catIndex];
+      const q = cat.questions[currentQuestion.qIndex];
+
+      // Review mode: question was already played, just show Q+A for recap
+      if (currentQuestion.reviewMode) {
+        return `
+          <div class="text-center mb-4">
+            <h1 class="jeopardy-title text-4xl font-bold text-yellow-400 mb-2">COMM 136 JEOPARDY</h1>
+          </div>
+
+          <div class="flex justify-center gap-4 mb-4">
+            <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+              <div class="text-blue-300 text-sm">Front Section</div>
+              <div class="text-yellow-400 text-2xl font-bold">$${scores.front}</div>
+            </div>
+            <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+              <div class="text-blue-300 text-sm">Back Section</div>
+              <div class="text-yellow-400 text-2xl font-bold">$${scores.back}</div>
+            </div>
+          </div>
+
+          <div class="bg-blue-800 rounded-lg p-8 text-center">
+            <div class="text-yellow-400 text-lg mb-2">${cat.name} &middot; $${q.points}</div>
+            <div class="text-white text-2xl mb-6 leading-relaxed">${q.q}</div>
+            <div class="bg-blue-700 p-4 rounded-lg mb-4">
+              <div class="text-yellow-400 text-xl">${q.a}</div>
+            </div>
+          </div>
+
+          <div class="mt-4 text-center">
+            <button onclick="backToBoard()" class="text-blue-300 hover:text-white underline">
+              ← Back to Board
+            </button>
+          </div>
+        `;
+      }
+
+      let html = `
+        <div class="text-center mb-4">
+          <h1 class="jeopardy-title text-4xl font-bold text-yellow-400 mb-2">COMM 136 JEOPARDY</h1>
+        </div>
+
+        <div class="flex justify-center gap-4 mb-4">
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Front Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.front}</div>
+          </div>
+          <div class="bg-blue-800 px-6 py-3 rounded-lg text-center min-w-32">
+            <div class="text-blue-300 text-sm">Back Section</div>
+            <div class="text-yellow-400 text-2xl font-bold">$${scores.back}</div>
+          </div>
+        </div>
+
+        <div class="bg-blue-800 rounded-lg p-8 text-center">
+          <div class="text-yellow-400 text-lg mb-2">${cat.name} - $${q.points}</div>
+          <div class="text-white text-2xl mb-6 leading-relaxed">${q.q}</div>
+          
+          <div id="timer-section" class="mb-6">
+            <div class="flex justify-center items-center gap-4">
+              <div id="timer-display" class="timer-circle bg-green-600 text-white">30</div>
+            </div>
+            <div class="mt-4 flex justify-center gap-3">
+              <button onclick="startTimer()" id="start-btn" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded-lg font-bold">
+                ▶ Start Timer
+              </button>
+              <button onclick="stopTimer()" id="stop-btn" class="bg-red-600 hover:bg-red-500 text-white px-6 py-2 rounded-lg font-bold" disabled>
+                ⏹ Stop
+              </button>
+            </div>
+          </div>
+          
+          <div id="answer-section">
+            <button onclick="showAnswer()" class="bg-yellow-500 hover:bg-yellow-400 text-blue-900 font-bold px-8 py-3 rounded-lg text-lg">
+              Reveal Answer
+            </button>
+          </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+          <button onclick="backToBoard()" class="text-blue-300 hover:text-white underline">
+            ← Back to Board (no points)
+          </button>
+        </div>
+      `;
+
+      return html;
+    }
+
+    function selectQuestion(catIndex, qIndex, reviewMode = false) {
+      currentQuestion = { catIndex, qIndex, reviewMode };
+      timeLeft = 30;
+      timerRunning = false;
+      render();
+    }
+
+    function startTimer() {
+      if (timerRunning) return;
+      
+      timerRunning = true;
+      document.getElementById('start-btn').disabled = true;
+      document.getElementById('stop-btn').disabled = false;
+      
+      const music = document.getElementById('jeopardy-music');
+      music.currentTime = 0;
+      music.play().catch(e => console.log('Audio play failed:', e));
+      
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        
+        if (timeLeft <= 0) {
+          stopTimer();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerRunning = false;
+      
+      const music = document.getElementById('jeopardy-music');
+      music.pause();
+      
+      document.getElementById('start-btn').disabled = true;
+      document.getElementById('stop-btn').disabled = true;
+      
+      const timerDisplay = document.getElementById('timer-display');
+      timerDisplay.classList.remove('bg-green-600', 'bg-yellow-500');
+      timerDisplay.classList.add('bg-red-600');
+      timerDisplay.textContent = "TIME";
+    }
+
+    function updateTimerDisplay() {
+      const timerDisplay = document.getElementById('timer-display');
+      timerDisplay.textContent = timeLeft;
+      
+      timerDisplay.classList.remove('bg-green-600', 'bg-yellow-500', 'bg-red-600');
+      
+      if (timeLeft > 15) {
+        timerDisplay.classList.add('bg-green-600');
+      } else if (timeLeft > 8) {
+        timerDisplay.classList.add('bg-yellow-500');
+      } else {
+        timerDisplay.classList.add('bg-red-600');
+      }
+    }
+
+    function showAnswer() {
+      clearInterval(timerInterval);
+      const music = document.getElementById('jeopardy-music');
+      music.pause();
+      
+      const cat = gameData.categories[currentQuestion.catIndex];
+      const q = cat.questions[currentQuestion.qIndex];
+
+      document.getElementById('timer-section').innerHTML = '';
+      document.getElementById('answer-section').innerHTML = `
+        <div class="bg-blue-700 p-4 rounded-lg mb-6">
+          <div class="text-yellow-400 text-xl">${q.a}</div>
+        </div>
+        <div class="text-blue-200 mb-3">Who answered correctly?</div>
+        <div class="flex justify-center gap-3 flex-wrap">
+          <button onclick="scoreTeam('front', ${q.points})" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg">
+            Front (+$${q.points})
+          </button>
+          <button onclick="scoreTeam('back', ${q.points})" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg">
+            Back (+$${q.points})
+          </button>
+          <button onclick="noScore()" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg">
+            No One
+          </button>
+        </div>
+      `;
+    }
+
+    function scoreTeam(team, points) {
+      scores[team] += points;
+      usedQuestions.add(`${currentQuestion.catIndex}-${currentQuestion.qIndex}`);
+      currentQuestion = null;
+      render();
+    }
+
+    function noScore() {
+      usedQuestions.add(`${currentQuestion.catIndex}-${currentQuestion.qIndex}`);
+      currentQuestion = null;
+      render();
+    }
+
+    function backToBoard() {
+      clearInterval(timerInterval);
+      const music = document.getElementById('jeopardy-music');
+      music.pause();
+      currentQuestion = null;
+      render();
+    }
+
+    function resetGame() {
+      scores = { front: 0, back: 0 };
+      usedQuestions = new Set();
+      currentQuestion = null;
+      clearInterval(timerInterval);
+      const music = document.getElementById('jeopardy-music');
+      music.pause();
+      render();
+    }
+
+    // Initial render
+    render();
+  </script>
+</body>
+</html>
