@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Human or AI? — COMM 136</title>
+<title>Spot the Slop — COMM 136</title>
 <style>
   :root {
     --navy: #003660;
@@ -18,6 +18,7 @@
     --success-bg: #E6F4EA;
     --danger: #C5221F;
     --danger-bg: #FCE8E6;
+    --highlight: #FEF7E0;
   }
   * { box-sizing: border-box; }
   body {
@@ -77,21 +78,7 @@
   .signal-name { font-weight: 500; }
   .signal-hint { color: var(--text-muted); font-size: 13px; margin-top: 1px; }
 
-  .verdict-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
-  .vbtn {
-    padding: 14px;
-    font-size: 14px;
-    font-weight: 500;
-    background: var(--surface);
-    border: 1px solid var(--navy);
-    border-radius: 4px;
-    cursor: pointer;
-    color: var(--navy);
-    transition: all 0.15s ease;
-    font-family: inherit;
-  }
-  .vbtn:hover { background: rgba(0, 54, 96, 0.06); }
-  .vbtn:active { transform: scale(0.99); }
+  .submit-row { display: flex; justify-content: flex-end; margin-top: 4px; }
 
   .reveal-card {
     background: var(--surface);
@@ -100,10 +87,16 @@
     margin-bottom: 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
   }
-  .verdict-line { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
-  .verdict-line.correct { color: var(--success); }
-  .verdict-line.wrong { color: var(--danger); }
-  .verdict-sub { font-size: 14px; color: var(--text); margin-bottom: 22px; }
+  .source-banner {
+    background: var(--highlight);
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .source-banner strong { font-weight: 500; }
+
   .section-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 12px; }
 
   .signal-feedback-list { margin: 0 0 22px; padding: 0; list-style: none; }
@@ -115,16 +108,13 @@
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 600;
     margin-top: 1px;
+    background: var(--success);
+    color: white;
   }
-  .feedback-icon.caught { background: var(--success); color: white; }
-  .feedback-icon.missed { background: transparent; border: 1.5px solid var(--text-faint); color: var(--text-faint); }
+  .feedback-icon.absent { background: transparent; border: 1.5px solid var(--text-faint); color: var(--text-faint); }
   .feedback-text { flex: 1; }
   .feedback-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 2px; }
   .feedback-evidence { color: var(--text-muted); font-size: 13px; line-height: 1.5; }
-
-  .reading-link { padding-top: 16px; border-top: 1px solid var(--border); }
-  .reading-link-label { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; }
-  .reading-link-text { font-size: 14px; color: var(--text); line-height: 1.55; }
 
   .action-row { display: flex; justify-content: flex-end; margin-top: 4px; }
   .primary-btn {
@@ -161,24 +151,24 @@
     border-radius: 8px 8px 0 0;
     padding: 36px 30px 30px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    text-align: center;
   }
-  .final-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
-  .final-score { font-size: 48px; font-weight: 400; margin: 0 0 14px; color: var(--navy); }
-  .final-msg { font-size: 14px; color: var(--text); margin-bottom: 24px; line-height: 1.6; max-width: 460px; margin-left: auto; margin-right: auto; }
+  .final-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; text-align: center; }
+  .final-msg { font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 22px; }
+  .final-stat { font-size: 14px; color: var(--text); margin-bottom: 8px; }
+  .final-stat strong { color: var(--navy); font-weight: 500; }
+  .restart-row { display: flex; justify-content: center; margin-top: 22px; }
 </style>
 </head>
 <body>
 <div class="container">
   <div id="game">
     <div class="form-header">
-      <h1 class="form-title">Human or AI?</h1>
+      <h1 class="form-title">Spot the Slop</h1>
     </div>
 
     <div class="progress-wrap">
       <div class="progress-meta">
         <span id="round-label">Round 1 of 10</span>
-        <span id="round-status">Score: 0</span>
       </div>
       <div class="progress"><div class="progress-fill" id="prog"></div></div>
     </div>
@@ -190,30 +180,20 @@
       </div>
 
       <div class="card">
-        <p class="question">Which Ch. 5 signals do you notice in this passage?<span class="required">*</span></p>
-        <p class="question-help">Select all that apply.</p>
+        <p class="question">Which slop patterns are present?<span class="required">*</span></p>
+        <p class="question-help">Select all that apply. Both human and AI writing can show any of these.</p>
         <div id="signals-list"></div>
-      </div>
-
-      <div class="card">
-        <p class="question">Who wrote this passage?<span class="required">*</span></p>
-        <div class="verdict-buttons">
-          <button class="vbtn" onclick="guess('human')">A human</button>
-          <button class="vbtn" onclick="guess('ai')">An AI</button>
+        <div class="submit-row" style="margin-top: 14px;">
+          <button class="primary-btn" onclick="submitEvaluation()">Submit evaluation</button>
         </div>
       </div>
     </div>
 
     <div id="reveal" style="display: none;">
       <div class="reveal-card">
-        <div class="verdict-line" id="verdict"></div>
-        <div class="verdict-sub" id="verdict-sub"></div>
-        <div class="section-label">Signals present</div>
+        <div class="source-banner" id="source-banner"></div>
+        <div class="section-label">Patterns present in this passage</div>
         <ul class="signal-feedback-list" id="feedback-list"></ul>
-        <div class="reading-link">
-          <div class="reading-link-label">Pilny et al., Ch. 5</div>
-          <div class="reading-link-text" id="framework"></div>
-        </div>
       </div>
       <div class="action-row">
         <button class="primary-btn" onclick="nextRound()">Next</button>
@@ -223,117 +203,124 @@
 
   <div id="final" style="display: none;">
     <div class="final-card">
-      <div class="final-label">Your score</div>
-      <div class="final-score"><span id="final-score">0</span> / 10</div>
+      <div class="final-label">Done</div>
       <div class="final-msg" id="final-msg"></div>
-      <button class="secondary-btn" onclick="restart()">Play again</button>
+      <div class="final-stat" id="final-stat-1"></div>
+      <div class="final-stat" id="final-stat-2"></div>
+      <div class="restart-row">
+        <button class="secondary-btn" onclick="restart()">Play again</button>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
 const signalDefs = [
-  { id: 'mimicker', name: 'Mimicker pattern', hint: 'Performs the genre, corporate buzzwords, sounds like the form' },
-  { id: 'appeaser', name: 'Appeaser pattern', hint: 'Smooth uplift, generic affirmation, empathy templates' },
-  { id: 'specifics', name: 'Specifics', hint: 'Named people, real numbers, concrete references' },
-  { id: 'imperfection', name: 'Imperfection', hint: 'Typos, idiosyncratic caps, ampersands, off grammar' }
+  { id: 'stock', name: 'Stock phrases', hint: 'Sounds professional, says nothing specific, drops into any company' },
+  { id: 'filler', name: 'Filler intensifiers', hint: 'Absolutely, incredibly, truly, deeply, 100%' },
+  { id: 'framing', name: 'Wrong framing', hint: 'Tone or formality mismatched to the audience' },
+  { id: 'specifics', name: 'Missing specifics', hint: 'Gestures at details without including them' },
+  { id: 'artifacts', name: 'Generation artifacts', hint: 'Placeholder text, brackets, leftover output bits' },
+  { id: 'adcopy', name: 'Ad copy', hint: 'Promotional language in the wrong context' }
 ];
 
 const rounds = [
   {
     text: "As we head into the summer months, I want to remind all of you to please plan to take your vacation time. It's important for all of us to have time away to rest, spend time with loved ones, and step away from our laptops. I saw a tweet yesterday that said, \"It's not working from home, it living at work.\" Let's make sure it doesn't feel like we're living at work!",
-    answer: "human",
-    signalsPresent: ['specifics', 'imperfection'],
-    evidence: {
-      specifics: "She quotes a specific tweet she saw yesterday.",
-      imperfection: "The typo \"it living at work\" (missing apostrophe + verb) is a real human error."
-    },
-    framework: "RLHF rewards smoothness. Typos and references to a tweet from yesterday are exactly what an appeaser-trained model is shaped to sand off."
+    source: "human",
+    sourceNote: "Internal email, J&J Global Community Impact, June 25, 2020.",
+    patternsPresent: [],
+    notes: {}
   },
   {
-    text: "As we approach the summer months, I want to take a moment to encourage everyone to prioritize taking their well-deserved vacation time. It's so important to step away, recharge, and spend quality time with the people who matter most. Let's all be intentional about creating space for rest and reflection in the weeks ahead!",
-    answer: "ai",
-    signalsPresent: ['mimicker', 'appeaser'],
-    evidence: {
-      mimicker: "\"Take a moment,\" \"well-deserved,\" \"intentional about creating space\" stacked together. Performs the workplace-update genre.",
-      appeaser: "\"Quality time with the people who matter most\" is a stock affirmation. Smooth, generic, uncontroversial."
-    },
-    framework: "RLHF trains the model on human preferences. Whatever raters upvote becomes the next-turn behavior. Smooth, pleasant, uncontroversial wins those upvotes."
+    text: "We are absolutely thrilled to share this incredibly exciting update on our summer wellness initiative. Our team is truly committed to ensuring that every single employee feels deeply supported as we navigate the months ahead. Please reach out at [Email Address] with any questions about this important program.",
+    source: "ai",
+    sourceNote: "Generated for this exercise.",
+    patternsPresent: ['filler', 'specifics', 'artifacts'],
+    notes: {
+      filler: "\"Absolutely thrilled,\" \"incredibly exciting,\" \"truly committed,\" \"deeply supported.\" Four intensifiers in two sentences.",
+      specifics: "What is the wellness initiative? What program? Gestures at a thing without naming it.",
+      artifacts: "\"[Email Address]\" was never replaced. Placeholder bracket left in the output."
+    }
   },
   {
     text: "COVID-19 donations are up to $39.2MM to date. Increases in cash came from $320K in donations from J&J Vision to Optometry related causes and $320K to UNICEF. Thank you to Yezenia for your continued work tracking these donations.",
-    answer: "human",
-    signalsPresent: ['specifics'],
-    evidence: {
-      specifics: "Verifiable specifics: $39.2MM total, two $320K line items, named recipient organizations, named individual."
-    },
-    framework: "Real reporting commits to specifics: numbers, names, recipient organizations. AI generation tends to drift toward genre-shaped summary because that is what its training corpus rewards."
+    source: "human",
+    sourceNote: "Internal email, J&J Global Community Impact, June 25, 2020.",
+    patternsPresent: [],
+    notes: {}
   },
   {
-    text: "Our COVID-19 response continues to demonstrate the power of collective action across the organization. Donations have grown significantly thanks to the generosity of our teams and partners. We remain committed to making a meaningful impact and are proud of the progress we have achieved together.",
-    answer: "ai",
-    signalsPresent: ['mimicker', 'appeaser'],
-    evidence: {
-      mimicker: "\"Power of collective action,\" \"committed to making a meaningful impact\" stacked. Performs the corporate-update genre with no commitment to numbers, line items, or recipient names.",
-      appeaser: "\"Proud of the progress we have achieved together\" — generic affirmation that sidesteps the specific."
-    },
-    framework: "\"It's not the model, it's the data.\" Trained on millions of corporate impact reports, the model produces a composite. Fluent in the register, anchored to nothing."
+    text: "In today's fast-paced world, our COVID-19 response continues to demonstrate our commitment to delivering excellence in everything we do. Donations have grown significantly across the organization. We remain dedicated to making a meaningful impact and supporting the communities we are privileged to serve.",
+    source: "ai",
+    sourceNote: "Generated for this exercise.",
+    patternsPresent: ['stock', 'specifics'],
+    notes: {
+      stock: "\"In today's fast-paced world\" and \"committed to delivering excellence in everything we do\" are both stock phrases. They could appear in any company's communication.",
+      specifics: "How much have donations grown? Which communities? No numbers, no recipient organizations, no names."
+    }
   },
   {
     text: "Diverse thinking is critical to solving complex challenges. The COVID-19 health crisis is a reminder of the need for diverse representation in STEM2D fields. Amidst the pandemic, the WiSTEM2D Youth Pillar is ramping up to offer digital programs for girls, virtual volunteer opportunities for J&J employees, and STEM2D education to help flatten the curve.",
-    answer: "human",
-    signalsPresent: ['specifics'],
-    evidence: {
-      specifics: "Specific entities under the polish: WiSTEM2D Youth Pillar, STEM2D fields, J&J employees, girls. Real offerings named: digital programs, virtual volunteer opportunities."
-    },
-    framework: "AI was trained on human corporate writing, which means AI corporate writing and human corporate writing sound alike. \"Sounds polished\" is not a reliable detection signal on its own."
+    source: "human",
+    sourceNote: "Internal newsletter, J&J WiSTEM2D Youth Pillar, May 2020.",
+    patternsPresent: ['stock'],
+    notes: {
+      stock: "\"Diverse thinking is critical to solving complex challenges\" is a stock phrase. It would land in any organization's DEI statement."
+    }
   },
   {
-    text: "In today's rapidly evolving world, the importance of diverse perspectives in STEM cannot be overstated. As we navigate unprecedented challenges, our commitment to fostering inclusive opportunities has never been stronger. Together, we can inspire the next generation of innovators and leaders.",
-    answer: "ai",
-    signalsPresent: ['mimicker'],
-    evidence: {
-      mimicker: "Five clich\u00e9s in three sentences: \"rapidly evolving world,\" \"cannot be overstated,\" \"navigate unprecedented challenges,\" \"fostering inclusive opportunities,\" \"inspire the next generation.\" Performs the DEI-statement genre."
-    },
-    framework: "Fine-tuning shapes the model on Q&A datasets. It learns the form of the response — the cadence, the vocabulary, the closing — without learning what any specific organization is doing about it."
+    text: "Hey girlies! 🌟 We are SO incredibly excited to share that the WiSTEM2D Youth Pillar is doing amazing things this year. Our commitment to empowering the next generation of female innovators has never been stronger. Make sure to check out our award-winning programs at [Link to Website] and stay tuned for more amazing updates!",
+    source: "ai",
+    sourceNote: "Generated for this exercise.",
+    patternsPresent: ['filler', 'framing', 'specifics', 'artifacts', 'adcopy'],
+    notes: {
+      filler: "\"SO incredibly excited,\" \"never been stronger,\" \"amazing things,\" \"more amazing updates.\"",
+      framing: "\"Hey girlies\" with sparkle emoji is a casual social media register. J&J's actual internal newsletter uses formal corporate tone. Wrong framing for the audience.",
+      specifics: "What programs? What updates? Gestures at content without naming any.",
+      artifacts: "\"[Link to Website]\" placeholder never replaced.",
+      adcopy: "\"Award-winning\" is promotional language inserted into what should be an informational update."
+    }
   },
   {
     text: "The biggest frustration by far is WIFI drop outs. I'm sure you can all agree with that. Favorite pastime driven by the video call phenomenon is \"unobtrusive observation\". BEWARE your SWIT colleagues are watching \uD83D\uDE0A",
-    answer: "human",
-    signalsPresent: ['imperfection'],
-    evidence: {
-      imperfection: "\"WIFI\" all caps (not \"Wi-Fi\"), \"BEWARE\" all caps for emphasis, scare quotes around \"unobtrusive observation.\" Idiosyncratic typography throughout."
-    },
-    framework: "RLHF rewards smoothness and agreeableness. Idiosyncratic capitalization and an affectionate emoji are exactly the texture an appeaser-trained model is shaped to sand off."
+    source: "human",
+    sourceNote: "Internal email, J&J SWIT team, June 25, 2020.",
+    patternsPresent: [],
+    notes: {}
   },
   {
-    text: "Working from home has brought its share of challenges, but it has also created opportunities for our team to grow closer in unexpected ways! Whether you're navigating WiFi issues or perfecting your home office setup, remember that we're all in this together. Be kind to yourselves and your colleagues during this time!",
-    answer: "ai",
-    signalsPresent: ['appeaser'],
-    evidence: {
-      appeaser: "\"Grow closer in unexpected ways,\" \"we're all in this together,\" \"be kind to yourselves\" form the empathy template. Vague adversity language (\"challenges,\" \"issues\") instead of any actual frustration."
-    },
-    framework: "Trained to validate, the model redirects from specific frustration to general affirmation. Nothing in the message could not also be said to a different team about a different issue."
+    text: "Your wellness is our top priority. We are deeply committed to supporting every member of our team during this unprecedented time. Whether you are navigating challenges at home or at work, we want you to know that we are 100% here for you. Visit [Wellness Portal URL] to access our suite of premium support resources.",
+    source: "ai",
+    sourceNote: "Generated for this exercise.",
+    patternsPresent: ['stock', 'filler', 'specifics', 'artifacts', 'adcopy'],
+    notes: {
+      stock: "\"Your wellness is our top priority\" is the stock phrase template. \"During this unprecedented time\" is another.",
+      filler: "\"Deeply committed,\" \"100% here for you.\" Filler intensifiers stacked.",
+      specifics: "What resources? What kind of support? Vague gesture at help without details.",
+      artifacts: "\"[Wellness Portal URL]\" placeholder never replaced.",
+      adcopy: "\"Premium support resources\" is marketing language for an internal wellness email."
+    }
   },
   {
     text: "Vicky, Rob & I have met with the below workstreams and are helping them to align 2021 goals to partner scopes: Communication Workstream, Product Workstream, Partner Workstream, and WiSTEM2D Partnership Pillar.",
-    answer: "human",
-    signalsPresent: ['specifics', 'imperfection'],
-    evidence: {
-      specifics: "Specific colleague names (Vicky, Rob), specific workstream names with internal capitalization conventions.",
-      imperfection: "Ampersand instead of \"and.\" \"Below workstreams\" is grammatically a little off, the way real corporate emails often are."
-    },
-    framework: "Imperfection signals. Ampersands, real first names, slightly off grammar are exactly the textures RLHF training smooths over."
+    source: "human",
+    sourceNote: "Internal email, J&J WiSTEM2D Youth Pillar, February 2021.",
+    patternsPresent: [],
+    notes: {}
   },
   {
-    text: "Excited to share that our team has been making incredible strides in aligning our workstreams with our 2021 strategic goals! Through ongoing collaboration and dedication, we are laying the foundation for a successful year ahead. Stay tuned for more updates as we continue this important work.",
-    answer: "ai",
-    signalsPresent: ['mimicker', 'appeaser'],
-    evidence: {
-      mimicker: "\"Excited to share,\" \"incredible strides,\" \"laying the foundation,\" \"Stay tuned\" form a LinkedIn-post register. No actual workstream names, no colleagues named, no goals named.",
-      appeaser: "Performs progress instead of reporting it. Cheerful, smooth, and content-free."
-    },
-    framework: "AI-generated workplace communication tends to perform tone over content. The model has learned what update emails sound like, not what they are for."
+    text: "Excited to share that our incredible team has been making truly amazing strides as we continue to build best-in-class workstream alignment for 2021! Through ongoing collaboration and unwavering dedication, we are laying the foundation for our most successful year yet. Stay tuned for more exciting updates from [Project Name].",
+    source: "ai",
+    sourceNote: "Generated for this exercise.",
+    patternsPresent: ['stock', 'filler', 'specifics', 'artifacts', 'adcopy'],
+    notes: {
+      stock: "\"Laying the foundation,\" \"most successful year yet,\" \"ongoing collaboration.\" Stock phrases.",
+      filler: "\"Incredible,\" \"truly amazing,\" \"unwavering.\" Filler intensifiers.",
+      specifics: "Which workstreams? What strides? No names, no goals, no metrics.",
+      artifacts: "\"[Project Name]\" placeholder never replaced.",
+      adcopy: "\"Best-in-class\" is marketing language for what should be an internal team update."
+    }
   }
 ];
 
@@ -348,12 +335,10 @@ function shuffle(arr) {
 
 let order = shuffle(rounds);
 let idx = 0;
-let score = 0;
 
 function render() {
   const r = order[idx];
   document.getElementById('round-label').textContent = 'Round ' + (idx + 1) + ' of ' + order.length;
-  document.getElementById('round-status').textContent = 'Score: ' + score;
   document.getElementById('text-card').textContent = r.text;
   document.getElementById('prog').style.width = ((idx) / order.length * 100) + '%';
 
@@ -386,57 +371,62 @@ function render() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function getSelectedSignals() {
-  const selected = [];
-  signalDefs.forEach(function(sig) {
-    const cb = document.getElementById('sig-' + sig.id);
-    if (cb && cb.checked) selected.push(sig.id);
-  });
-  return selected;
-}
-
-function guess(choice) {
+function submitEvaluation() {
   const r = order[idx];
-  const correct = choice === r.answer;
-  if (correct) score++;
-  const selectedSignals = getSelectedSignals();
 
-  const verdict = document.getElementById('verdict');
-  const verdictSub = document.getElementById('verdict-sub');
+  const banner = document.getElementById('source-banner');
+  if (r.source === 'human') {
+    banner.innerHTML = '<strong>This passage was written by a human.</strong><br>' + r.sourceNote;
+  } else {
+    banner.innerHTML = '<strong>This passage was generated by an AI.</strong><br>' + r.sourceNote;
+  }
+
   const feedbackList = document.getElementById('feedback-list');
-  const frameworkEl = document.getElementById('framework');
-
-  verdict.className = 'verdict-line ' + (correct ? 'correct' : 'wrong');
-  verdict.textContent = correct ? 'Correct.' : 'Not quite.';
-  verdictSub.textContent = r.answer === 'ai' ? 'An AI wrote this passage.' : 'A human wrote this passage.';
-
   feedbackList.innerHTML = '';
-  r.signalsPresent.forEach(function(sigId) {
-    const sig = signalDefs.find(function(s) { return s.id === sigId; });
-    if (!sig) return;
-    const wasSelected = selectedSignals.indexOf(sigId) !== -1;
+
+  if (r.patternsPresent.length === 0) {
     const li = document.createElement('li');
     li.className = 'signal-feedback-item';
     const icon = document.createElement('div');
-    icon.className = 'feedback-icon ' + (wasSelected ? 'caught' : 'missed');
-    icon.textContent = wasSelected ? '\u2713' : '\u2022';
+    icon.className = 'feedback-icon absent';
+    icon.textContent = '\u2022';
     const textWrap = document.createElement('div');
     textWrap.className = 'feedback-text';
     const name = document.createElement('div');
     name.className = 'feedback-name';
-    name.textContent = sig.name;
+    name.textContent = 'No slop patterns present';
     const evidence = document.createElement('div');
     evidence.className = 'feedback-evidence';
-    evidence.textContent = r.evidence[sigId] || '';
+    evidence.textContent = 'This passage avoids all six patterns.';
     textWrap.appendChild(name);
     textWrap.appendChild(evidence);
     li.appendChild(icon);
     li.appendChild(textWrap);
     feedbackList.appendChild(li);
-  });
-
-  frameworkEl.textContent = r.framework;
-  document.getElementById('round-status').textContent = 'Score: ' + score;
+  } else {
+    r.patternsPresent.forEach(function(sigId) {
+      const sig = signalDefs.find(function(s) { return s.id === sigId; });
+      if (!sig) return;
+      const li = document.createElement('li');
+      li.className = 'signal-feedback-item';
+      const icon = document.createElement('div');
+      icon.className = 'feedback-icon';
+      icon.textContent = '\u2713';
+      const textWrap = document.createElement('div');
+      textWrap.className = 'feedback-text';
+      const name = document.createElement('div');
+      name.className = 'feedback-name';
+      name.textContent = sig.name;
+      const evidence = document.createElement('div');
+      evidence.className = 'feedback-evidence';
+      evidence.textContent = r.notes[sigId] || '';
+      textWrap.appendChild(name);
+      textWrap.appendChild(evidence);
+      li.appendChild(icon);
+      li.appendChild(textWrap);
+      feedbackList.appendChild(li);
+    });
+  }
 
   document.getElementById('choice').style.display = 'none';
   document.getElementById('reveal').style.display = 'block';
@@ -449,13 +439,14 @@ function nextRound() {
   if (idx >= order.length) {
     document.getElementById('game').style.display = 'none';
     document.getElementById('final').style.display = 'block';
-    document.getElementById('final-score').textContent = score;
-    let msg;
-    if (score >= 9) msg = "Well-calibrated. The patterns you spotted are the same ones to watch for in your own AI drafts next week.";
-    else if (score >= 7) msg = "Solid detection. The hardest cases involve human writing that sounds polished or AI writing that names something concrete.";
-    else if (score >= 5) msg = "Detection is harder than it feels. Notice which ones fooled you. Those patterns are likely to show up in your own AI drafts.";
-    else msg = "AI imitation is more convincing than most people expect. The takeaway is not that you are bad at this. It is that detection alone is not a reliable strategy.";
-    document.getElementById('final-msg').textContent = msg;
+
+    const totalHuman = order.filter(function(r) { return r.source === 'human'; }).length;
+    const humanWithPatterns = order.filter(function(r) { return r.source === 'human' && r.patternsPresent.length > 0; }).length;
+
+    document.getElementById('final-msg').textContent = "You evaluated 10 passages on six slop patterns.";
+    document.getElementById('final-stat-1').innerHTML = '<strong>' + totalHuman + ' of ' + order.length + ' passages were human-written.</strong> ' + humanWithPatterns + ' of those showed slop patterns.';
+    document.getElementById('final-stat-2').innerHTML = '<strong>The patterns are evaluation criteria, not detection rules.</strong> Human writing can show slop. The patterns help you evaluate writing quality, not just spot AI.';
+
     window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
@@ -465,7 +456,6 @@ function nextRound() {
 function restart() {
   order = shuffle(rounds);
   idx = 0;
-  score = 0;
   document.getElementById('final').style.display = 'none';
   document.getElementById('game').style.display = 'block';
   render();
